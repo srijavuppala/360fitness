@@ -1,17 +1,45 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "echo Flutter is installed by the build script",
-  "buildCommand": "bash scripts/build-web-demo.sh",
-  "outputDirectory": "build/web",
+  "installCommand": "npm ci --prefix apps/web",
+  "buildCommand": "npm run build --prefix apps/web",
+  "outputDirectory": "apps/web/dist",
   "headers": [
-    {"source": "/(.*)", "headers": [
-      {"key": "X-Content-Type-Options", "value": "nosniff"},
-      {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"}
-    ]},
-    {"source": "/index.html", "headers": [{"key": "Cache-Control", "value": "no-cache"}]}
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
   ],
   "rewrites": [
-    {"source": "/(.*)", "destination": "/index.html"}
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

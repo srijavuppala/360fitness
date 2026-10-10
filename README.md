@@ -1,4 +1,4 @@
-# 360° Fitness
+# 360fitness
 
 The primary product is the **React Native + Expo mobile app** for iPhone and Android in [`apps/mobile`](apps/mobile/README.md). The React website in `apps/web` is a companion implementation.
 
@@ -29,4 +29,9 @@ The website works locally without accounts. Firebase sign-in, sync and server-si
 - `lib/`, `test/`, `legacy/web-prototype/` — retained Flutter prototypes. [Historical notes](docs/legacy-flutter.md).
 
 Cloud credentials and AI secrets are not committed. No live deployment has been performed for the React website.
-# 360fitness
+
+## Product backlog and testing
+
+- [User feedback and use cases](docs/USER-FEEDBACK-BACKLOG.md) — frontend, backend, database work and acceptance checks for the October 10 checklist.
+- [Feature coverage audit](docs/FEATURE-COVERAGE-AUDIT.md) — implemented foundations and remaining product scope.
+- [Expo collaborators, testers and app users](docs/expo-and-app-users.md) — invitations, phone builds and per-user data requirements.

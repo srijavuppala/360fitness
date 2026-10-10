@@ -1,6 +1,6 @@
 {
   "name": "nourish-functions",
-  "description": "Cloud Functions for Nourish — meal parsing via Gemini, enriched with USDA data.",
+  "description": "Cloud Functions for Nourish \u2014 meal parsing via Gemini, enriched with USDA data.",
   "private": true,
   "type": "module",
   "engines": {
@@ -8,11 +8,13 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "node --test test/validate.test.js test/parseMeal.test.js test/usda.test.js test/gemini.test.js",
+    "test": "node --test test/validate.test.js test/parseMeal.test.js test/usda.test.js test/gemini.test.js test/accessPolicy.test.js test/labelAnalysis.test.js test/mealPhotoAnalysis.test.js test/mealPrepAnalysis.test.js",
     "serve": "firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-nourish \"node --test test/firestore-rules.test.js\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-nourish \"node --test test/firestore-rules.test.js\"",
+    "label:dev": "node --env-file-if-exists=.env.label.local scripts/label-dev-server.js",
+    "test:profiles": "firebase emulators:exec --only firestore --project demo-nourish \"node --test test/firestore-rules.test.js && npm --prefix ../apps/mobile run test:cloud\""
   },
   "dependencies": {
     "firebase-admin": "^12.6.0",

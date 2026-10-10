@@ -1,0 +1,6 @@
+{
+  "react-native": {
+    "app_check_token_auto_refresh": false,
+    "app_data_collection_default_enabled": false
+  }
+}

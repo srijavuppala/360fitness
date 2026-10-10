@@ -22,6 +22,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 
 let testEnv;
@@ -34,6 +35,7 @@ const BOB = 'bob-uid';
 
 /** Every path the app writes, from lib/core/constants.dart. */
 const ownedPaths = [
+  ['a website record', (uid) => `users/${uid}/webRecords/profile`],
   ['the user document', (uid) => `users/${uid}`],
   ['the quiz profile', (uid) => `users/${uid}/profile/main`],
   ['calorie and macro targets', (uid) => `users/${uid}/targets/current`],
@@ -142,6 +144,7 @@ describe('a signed-out visitor', () => {
 describe('anything outside a user document', () => {
   const strayPaths = [
     'config/global',
+    'analysisUsage/alice-uid',
     'experts/some-expert',
     'bookings/some-booking',
     'users',
@@ -190,5 +193,98 @@ describe('the rules file', () => {
       'utf8',
     );
     assert.match(rules, /allow read, write: if false/);
+  });
+});
+
+const mobileAnswers = {
+  age: '25–34', metric: 'Prefer not to share', primaryGoal: 'Build consistent habits',
+  outcome: 'Cook at home', activity: 'Moderately active', diet: 'No specific diet',
+  allergies: ['None known'], workouts: ['Walking'], workoutFrequency: '1–2 days a week',
+  tracking: 'Quick meal check-ins', notifications: 'Off', voice: 'Text only', checkInTime: '19:30',
+};
+const mobileRecord = (answers = mobileAnswers, revision = 1) => ({
+  schemaVersion: 1, revision, generation: 'abcdefghijklmnopqrst', updatedAt: serverTimestamp(),
+  profile: { version: 1, updatedAt: '2026-10-08T12:00:00.000Z', answers },
+});
+const verified = (uid = ALICE) => testEnv.authenticatedContext(uid, { email_verified: true }).firestore();
+describe('mobile onboarding profiles', () => {
+  it('allows a verified owner to create, read, advance revision and delete', async () => {
+    const ref = doc(verified(), `mobileProfiles/${ALICE}`);
+    await assertSucceeds(setDoc(ref, mobileRecord()));
+    await assertSucceeds(getDoc(ref));
+    await assertSucceeds(setDoc(ref, mobileRecord({ ...mobileAnswers, outcome: 'Walk daily' }, 2)));
+    await assertSucceeds(deleteDoc(ref));
+  });
+  it('rejects unsigned, unverified and other verified accounts', async () => {
+    const path = `mobileProfiles/${ALICE}`;
+    await assertSucceeds(setDoc(doc(verified(), path), mobileRecord()));
+    for (const client of [anonymous, alice, verified(BOB)]) {
+      await assertFails(getDoc(doc(client, path)));
+      await assertFails(setDoc(doc(client, path), mobileRecord()));
+      await assertFails(deleteDoc(doc(client, path)));
+    }
+  });
+  it('rejects unknown fields, missing required answers and malformed choices', async () => {
+    const ref = doc(verified(), `mobileProfiles/${ALICE}`);
+    const missing = { ...mobileAnswers }; delete missing.age;
+    for (const answers of [missing, { ...mobileAnswers, admin: true },
+      { ...mobileAnswers, outcome: 'x'.repeat(301) }, { ...mobileAnswers, activity: 'invented' },
+      { ...mobileAnswers, allergies: ['Milk', 'None known'] }, { ...mobileAnswers, workouts: ['Walking', 'Walking'] },
+      { ...mobileAnswers, checkInTime: '7:30 PM' }, { ...mobileAnswers, metricValue: '72' },
+      { ...mobileAnswers, metric: 'Weight (kg)', metricValue: '-1' },
+      { ...mobileAnswers, metric: 'Weight (kg)', metricValue: '100001' },
+      { ...mobileAnswers, diet: 'Other' }]) {
+      await assertFails(setDoc(ref, mobileRecord(answers)));
+    }
+    await assertFails(setDoc(ref, { ...mobileRecord(), extra: true }));
+    await assertFails(setDoc(ref, { ...mobileRecord(), updatedAt: new Date('2020-01-01') }));
+  });
+  it('requires revision one on creation and exactly one increment on update', async () => {
+    const ref = doc(verified(), `mobileProfiles/${ALICE}`);
+    await assertFails(setDoc(ref, mobileRecord(mobileAnswers, 7)));
+    await assertSucceeds(setDoc(ref, mobileRecord()));
+    await assertFails(setDoc(ref, mobileRecord()));
+    await assertFails(setDoc(ref, mobileRecord(mobileAnswers, 3)));
+  });
+  it('accepts optional answers, conditional answers and canonical time', async () => {
+    const ref = doc(verified(), `mobileProfiles/${ALICE}`);
+    await assertSucceeds(setDoc(ref, mobileRecord({ ...mobileAnswers,
+      metric: 'Weight (kg)', metricValue: '72.5', diet: 'Other', dietOther: 'My preference',
+      allergies: ['Other'], allergyOther: 'Test allergy', checkInTime: '00:00',
+    })));
+  });
+});
+
+describe('spoken diet explanations', () => {
+  it('accepts a bounded optional diet plan and rejects oversized text', async () => {
+    const ref = doc(verified(), `mobileProfiles/${ALICE}`);
+    await assertFails(setDoc(ref, mobileRecord({ ...mobileAnswers, dietPlan: 'x'.repeat(1001) })));
+    await assertSucceeds(setDoc(ref, mobileRecord({ ...mobileAnswers, dietPlan: 'x'.repeat(1000) })));
+  });
+});
+
+describe('mobile meal prep backups', () => {
+  const record = (revision = 1) => ({ schemaVersion: 1, revision, generation: 'a'.repeat(20), payload: JSON.stringify({version:1,batches:[],checked:[]}), updatedAt: serverTimestamp() });
+  const verified = () => testEnv.authenticatedContext(ALICE, {email_verified:true}).firestore();
+  it('allows a verified owner to save and read a plan', async () => {
+    const ref=doc(verified(),'mobileMealPrep',ALICE);
+    await assertSucceeds(setDoc(ref,record()));await assertSucceeds(getDoc(ref));
+  });
+  it('denies other accounts, anonymous sessions and unverified owners', async () => {
+    await assertSucceeds(setDoc(doc(verified(),'mobileMealPrep',ALICE),record()));
+    for (const db of [bob,anonymous,alice]) {
+      await assertFails(getDoc(doc(db,'mobileMealPrep',ALICE)));
+      await assertFails(setDoc(doc(db,'mobileMealPrep',ALICE),record(2)));
+    }
+  });
+  it('enforces monotonic revisions and an immutable generation',async()=>{
+    const ref=doc(verified(),'mobileMealPrep',ALICE);await assertSucceeds(setDoc(ref,record()));
+    await assertFails(setDoc(ref,record()));await assertFails(setDoc(ref,record(3)));
+    await assertFails(setDoc(ref,{...record(2),generation:'b'.repeat(20)}));
+    await assertSucceeds(setDoc(ref,record(2)));
+  });
+  it('rejects oversized payloads, unsupported schemas, unknown fields and forged timestamps',async()=>{
+    const ref=doc(verified(),'mobileMealPrep',ALICE);
+    for (const change of [{payload:'x'.repeat(180001)},{payload:{}},{schemaVersion:2},{extra:true},{updatedAt:new Date(0)},{generation:'bad'},{revision:2}]) await assertFails(setDoc(ref,{...record(),...change}));
   });
 });

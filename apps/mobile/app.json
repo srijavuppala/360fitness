@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "360\u00b0 Fitness AI",
+    "slug": "fitness360",
+    "version": "0.1.0",
+    "scheme": "fitness360",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fitness360.demo"
+    },
+    "android": {
+      "package": "com.fitness360.demo"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "360\u00b0 Fitness AI"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow 360 Fitness to scan barcodes and photograph meals and nutrition labels. Photos are sent for AI analysis only when you choose it.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true,
+          "microphonePermission": "Allow 360 Fitness to hear your answer only when you start voice entry. Audio recordings are not saved by this app."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a meal or nutrition label photo to review or send for AI analysis.",
+          "cameraPermission": "Allow 360 Fitness to scan barcodes and photograph meals and nutrition labels. Photos are sent for AI analysis only when you choose it.",
+          "microphonePermission": "Allow 360 Fitness to hear your answer only when you start voice entry. Audio recordings are not saved by this app."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow 360 Fitness to hear your answer only when you start voice entry. Audio recordings are not saved by this app.",
+          "speechRecognitionPermission": "Allow your phone\u2019s speech service to turn your spoken meals and goals into text. Audio may be processed online."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

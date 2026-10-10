@@ -31,9 +31,21 @@ node_modules/
 # Secrets
 .env
 .env.local
+.env.*.local
+apps/mobile/google-services.json
+apps/mobile/GoogleService-Info.plist
 .vercel/
 
 # Emulator debug logs
 firestore-debug.log
 firebase-debug.log
 ui-debug.log
+
+# Also ignore dependency-cache symlinks
+node_modules
+
+# Local configuration and credentials
+.env.*
+!.env.example
+!.env.label.example
+*.service-account.json

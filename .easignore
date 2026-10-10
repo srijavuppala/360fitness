@@ -1,0 +1,71 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+
+# Android signing — never commit these
+android/key.properties
+*.jks
+*.keystore
+
+# Per-project Firebase config. A placeholder lib/firebase_options.dart IS
+# committed so demo builds compile; `flutterfire configure` overwrites it.
+# These two carry project secrets and stay out of the repo, per the PRD.
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+.firebase/
+
+# Cloud Functions
+functions/node_modules/
+functions/.env
+functions/lib/
+
+# Legacy web prototype
+legacy/web-prototype/dist/
+legacy/web-prototype/.sites-runtime/
+node_modules/
+
+# Secrets
+.env
+.env.local
+.vercel/
+
+# Emulator debug logs
+firestore-debug.log
+firebase-debug.log
+ui-debug.log
+
+# Also ignore dependency-cache symlinks
+node_modules
+
+# Only the React Native product is needed for EAS builds.
+/apps/web
+/apps/mobile/qa
+/apps/mobile/.node_modules-offloaded
+/apps/mobile/dist
+/apps/mobile/.expo
+/apps/mobile/ios
+/apps/mobile/android
+/legacy
+/lib
+/test
+/functions
+/docs
+/android
+/ios
+/macos
+/windows
+/linux
+/web
+/build
+.dart_tool
+.flutter-plugins-dependencies
+
+# Local configuration and credentials
+.env.*
+!.env.example
+!.env.label.example
+*.service-account.json
