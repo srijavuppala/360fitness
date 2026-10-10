@@ -69,3 +69,14 @@ node_modules
 !.env.example
 !.env.label.example
 *.service-account.json
+
+# Keep machine settings, generated reports and signing material out of uploads.
+/outputs
+/apps/mobile/.claude
+/apps/mobile/.codex
+*.p8
+*.p12
+*.pem
+*.mobileprovision
+/apps/mobile/google-services.json
+/apps/mobile/GoogleService-Info.plist

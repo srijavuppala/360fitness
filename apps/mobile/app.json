@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "360\u00b0 Fitness AI",
+    "name": "360° Fitness AI",
     "slug": "fitness360",
     "version": "0.1.0",
     "scheme": "fitness360",
@@ -16,7 +16,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "name": "360\u00b0 Fitness AI"
+      "name": "360° Fitness AI"
     },
     "plugins": [
       "expo-router",
@@ -43,12 +43,19 @@
         "expo-speech-recognition",
         {
           "microphonePermission": "Allow 360 Fitness to hear your answer only when you start voice entry. Audio recordings are not saved by this app.",
-          "speechRecognitionPermission": "Allow your phone\u2019s speech service to turn your spoken meals and goals into text. Audio may be processed online."
+          "speechRecognitionPermission": "Allow your phone’s speech service to turn your spoken meals and goals into text. Audio may be processed online."
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4c8f5119-e51b-46a7-8f9e-9deb32d30dc5"
+      }
+    },
+    "owner": "shiji123s-team"
   }
 }
