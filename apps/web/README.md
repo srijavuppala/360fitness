@@ -4,7 +4,10 @@ Responsive React + TypeScript website and nutrition workspace, built with Vite. 
 
 ## Run
 
+From the repository root, install both apps' dependencies. Vite reads the mobile domain modules' Expo-based TypeScript configuration during the web build.
+
 ```sh
+npm --prefix apps/mobile ci
 cd apps/web
 npm ci
 npm run dev

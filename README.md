@@ -298,7 +298,10 @@ Never put Gemini secrets, service-account private keys or signing credentials in
 
 ### Companion website
 
+Install the mobile dependencies too: the website imports shared meal-domain modules whose TypeScript configuration extends Expo's configuration.
+
 ```sh
+npm --prefix apps/mobile ci
 cd apps/web
 npm ci
 npm run dev
