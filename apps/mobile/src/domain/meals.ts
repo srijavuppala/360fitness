@@ -19,8 +19,10 @@ export type Food = {
   quantity: number;
   unit: string;
   nutrition: Nutrients;
-  source: "sample" | "manual" | "ai" | "barcode";
+  source: "sample" | "manual" | "ai" | "barcode" | "search";
   sourceBarcode?: string;
+  /** Search candidate id, e.g. "usda:173944" or "off:00517706". */
+  sourceId?: string;
   estimateNote?: string;
 };
 export type Meal = { id: string; name: string; slot: Slot; foods: Food[] };
