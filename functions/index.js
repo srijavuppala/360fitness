@@ -6,7 +6,8 @@ import { setGlobalOptions } from 'firebase-functions/v2/options';
 import { logger } from 'firebase-functions';
 
 import { InvalidInput, parseMeal } from './src/parseMeal.js';
-import {hasRecentAuthentication, nextAnalysisUsage} from './src/accessPolicy.js';
+import {hasRecentAuthentication, nextAnalysisUsage, nextSearchUsage} from './src/accessPolicy.js';
+import { createFoodSearch, FoodSearchError, handleFoodSearchRequest } from './src/foodSearch.js';
 import { handleLabelRequest } from './src/labelHandler.js';
 import { analyzeMealPrep, handlePrepRequest } from './src/mealPrepAnalysis.js';
 import { analyzeMealPhoto } from './src/mealPhotoAnalysis.js';
@@ -44,6 +45,39 @@ export const analyzeMealPrepCallable = photoCallable(analyzeMealPrep, handlePrep
 
 export const analyzeLabelCallable = photoCallable(analyzeLabel);
 export const analyzeMealPhotoCallable = photoCallable(analyzeMealPhoto);
+
+// One cache per warm instance; the secret is only readable inside a request.
+let foodSearch;
+
+/**
+ * Search USDA FoodData Central and Open Food Facts by name. Results are
+ * candidates for the user to review; nothing is logged here.
+ */
+export const searchFoodsCallable = onCall(
+  { enforceAppCheck: true, secrets: ['USDA_API_KEY'], timeoutSeconds: 15, memory: '256MiB', maxInstances: 5, concurrency: 20 },
+  async (request) => {
+    try {
+      foodSearch ??= createFoodSearch({ usdaApiKey: process.env.USDA_API_KEY });
+      return await handleFoodSearchRequest(request, {
+        search: foodSearch,
+        consumeQuota: async (uid) => {
+          const ref = getFirestore().doc(`searchUsage/${uid}`);
+          await getFirestore().runTransaction(async (transaction) => {
+            const snapshot = await transaction.get(ref);
+            const next = nextSearchUsage(snapshot.data());
+            if (!next) throw new FoodSearchError('resource-exhausted', 'Search limit reached. Try again shortly or enter the food manually.');
+            transaction.set(ref, next);
+          });
+        },
+      });
+    } catch (error) {
+      if (error instanceof FoodSearchError) throw new HttpsError(error.code, error.message);
+      // No query text or user identifiers in logs.
+      logger.error('Food search failed', { code: 'food-search-failed' });
+      throw new HttpsError('internal', 'Food search could not finish. Please try again.');
+    }
+  },
+);
 
 /**
  * Parse a plain-language meal description into structured items.
@@ -114,6 +148,7 @@ export const deleteAccount = onCall(
     const firestore = getFirestore();
     await firestore.recursiveDelete(firestore.doc(`users/${uid}`));
     await firestore.doc(`analysisUsage/${uid}`).delete();
+    await firestore.doc(`searchUsage/${uid}`).delete();
     await firestore.doc(`mobileProfiles/${uid}`).delete();
     await firestore.doc(`mobileMealPrep/${uid}`).delete();
     await getAuth().deleteUser(uid);

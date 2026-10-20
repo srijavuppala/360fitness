@@ -1,0 +1,210 @@
+{
+  "totalHits": 4969,
+  "currentPage": 1,
+  "foods": [
+    {
+      "fdcId": 2012128,
+      "description": "BANANA",
+      "dataType": "Branded",
+      "brandOwner": "Wonder Natural Foods Corp",
+      "brandName": "BETTER'N PEANUT BUTTER",
+      "gtinUpc": "016459200441",
+      "servingSize": 32.0,
+      "servingSizeUnit": "g",
+      "householdServingFullText": "2 Tbsp",
+      "foodMeasures": [],
+      "foodNutrients": [
+        {
+          "nutrientId": 1003,
+          "nutrientName": "Protein",
+          "unitName": "G",
+          "value": 12.5
+        },
+        {
+          "nutrientId": 1004,
+          "nutrientName": "Total lipid (fat)",
+          "unitName": "G",
+          "value": 6.25
+        },
+        {
+          "nutrientId": 1005,
+          "nutrientName": "Carbohydrate, by difference",
+          "unitName": "G",
+          "value": 40.6
+        },
+        {
+          "nutrientId": 1008,
+          "nutrientName": "Energy",
+          "unitName": "KCAL",
+          "value": 312
+        }
+      ]
+    },
+    {
+      "fdcId": 2011468,
+      "description": "BANANA",
+      "dataType": "Branded",
+      "brandOwner": "Kid Vids Educational Entertainment",
+      "brandName": "NUTTY & FRUITY",
+      "gtinUpc": "609207617761",
+      "servingSize": 28.0,
+      "servingSizeUnit": "g",
+      "householdServingFullText": "1 ONZ",
+      "foodMeasures": [],
+      "foodNutrients": [
+        {
+          "nutrientId": 1003,
+          "nutrientName": "Protein",
+          "unitName": "G",
+          "value": 0.0
+        },
+        {
+          "nutrientId": 1004,
+          "nutrientName": "Total lipid (fat)",
+          "unitName": "G",
+          "value": 1.07
+        },
+        {
+          "nutrientId": 1005,
+          "nutrientName": "Carbohydrate, by difference",
+          "unitName": "G",
+          "value": 78.6
+        },
+        {
+          "nutrientId": 1008,
+          "nutrientName": "Energy",
+          "unitName": "KCAL",
+          "value": 336
+        }
+      ]
+    },
+    {
+      "fdcId": 173945,
+      "description": "Bananas, dehydrated, or banana powder",
+      "dataType": "SR Legacy",
+      "foodMeasures": [],
+      "foodNutrients": [
+        {
+          "nutrientId": 1003,
+          "nutrientName": "Protein",
+          "unitName": "G",
+          "value": 3.89
+        },
+        {
+          "nutrientId": 1004,
+          "nutrientName": "Total lipid (fat)",
+          "unitName": "G",
+          "value": 1.81
+        },
+        {
+          "nutrientId": 1005,
+          "nutrientName": "Carbohydrate, by difference",
+          "unitName": "G",
+          "value": 88.3
+        },
+        {
+          "nutrientId": 1008,
+          "nutrientName": "Energy",
+          "unitName": "KCAL",
+          "value": 346
+        }
+      ]
+    },
+    {
+      "fdcId": 173944,
+      "description": "Bananas, raw",
+      "dataType": "SR Legacy",
+      "foodMeasures": [],
+      "foodNutrients": [
+        {
+          "nutrientId": 1005,
+          "nutrientName": "Carbohydrate, by difference",
+          "unitName": "G",
+          "value": 22.8
+        },
+        {
+          "nutrientId": 1008,
+          "nutrientName": "Energy",
+          "unitName": "KCAL",
+          "value": 89.0
+        },
+        {
+          "nutrientId": 1003,
+          "nutrientName": "Protein",
+          "unitName": "G",
+          "value": 1.09
+        },
+        {
+          "nutrientId": 1004,
+          "nutrientName": "Total lipid (fat)",
+          "unitName": "G",
+          "value": 0.33
+        }
+      ]
+    },
+    {
+      "fdcId": 1105073,
+      "description": "Bananas, overripe, raw",
+      "dataType": "Foundation",
+      "foodMeasures": [],
+      "foodNutrients": [
+        {
+          "nutrientId": 1004,
+          "nutrientName": "Total lipid (fat)",
+          "unitName": "G",
+          "value": 0.22
+        },
+        {
+          "nutrientId": 1003,
+          "nutrientName": "Protein",
+          "unitName": "G",
+          "value": 0.73
+        },
+        {
+          "nutrientId": 1005,
+          "nutrientName": "Carbohydrate, by difference",
+          "unitName": "G",
+          "value": 20.1
+        },
+        {
+          "nutrientId": 1008,
+          "nutrientName": "Energy",
+          "unitName": "KCAL",
+          "value": 85.0
+        }
+      ]
+    },
+    {
+      "fdcId": 167629,
+      "description": "Melon, banana (Navajo)",
+      "dataType": "SR Legacy",
+      "foodMeasures": [],
+      "foodNutrients": [
+        {
+          "nutrientId": 1003,
+          "nutrientName": "Protein",
+          "unitName": "G",
+          "value": 0.84
+        },
+        {
+          "nutrientId": 1004,
+          "nutrientName": "Total lipid (fat)",
+          "unitName": "G",
+          "value": 0.2
+        },
+        {
+          "nutrientId": 1005,
+          "nutrientName": "Carbohydrate, by difference",
+          "unitName": "G",
+          "value": 4.06
+        },
+        {
+          "nutrientId": 1008,
+          "nutrientName": "Energy",
+          "unitName": "KCAL",
+          "value": 21.0
+        }
+      ]
+    }
+  ]
+}

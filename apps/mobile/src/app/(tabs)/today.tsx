@@ -115,6 +115,15 @@ export default function Today() {
       <View style={s.actions}>
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel="Search food"
+          onPress={() => router.push({ pathname: "/search", params: { date } })}
+          style={s.action}
+        >
+          <Icon name="search-outline" color={c.accent} />
+          <Text style={s.actionText}>Search food</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
           accessibilityLabel="Scan food"
           onPress={() => router.push("/scan")}
           style={s.action}
