@@ -8,7 +8,7 @@ The initial publication includes the React apps, required Firebase code/rules, d
 
 1. Review `git status` and select the React app, required Firebase backend/rules, docs, lockfiles and CI files as the initial mobile baseline. Inspect public-repository contents before publishing.
 2. Never stage `.env.local`, provider keys, service accounts, signing files, dependency symlinks or generated bundles. The ignore files cover common local configuration; ignore patterns are not a substitute for a secret scan.
-3. Use `codex/<change>` branches and a PR into the actual default branch. Keep UI, domain/service, security-rule and verification details in the PR. The template prompts for data/deployment effects.
+3. Use `feature/<change>` (new work or refactors), `fix/<change>` (bug fixes) or `docs/<change>` branches and a PR into the actual default branch. Keep UI, domain/service, security-rule and verification details in the PR. The template prompts for data/deployment effects.
 4. Required validation: mobile export for all platforms, mobile typecheck/lint/tests, generated-rule drift check, website check, backend tests and Firestore emulator authorization/schema tests.
 5. After the baseline exists remotely, enable branch protection/rulesets with these checks, block force pushes/deletion and require review when another reviewer is available. No branch protection or default-branch rename was performed here.
 6. Merge only after checks and review. Use a separate explicit release step for Firebase and EAS. CI has read-only repository permissions and does not deploy or hold production secrets.
