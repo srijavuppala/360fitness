@@ -11,17 +11,21 @@ export function HistoryChart({
   selected,
   nutrient,
   onSelect,
+  target,
 }: {
   days: HistoryDay[];
   selected: string;
   nutrient: "kcal" | "protein";
   onSelect: (date: string) => void;
+  target?: number | null;
 }) {
   const scroll = useRef<ScrollView>(null);
   const value = (day: HistoryDay): Nutrients["kcal"] =>
     day.nutrition?.[nutrient] ?? null;
-  const max = Math.max(1, ...days.map((day) => value(day) ?? 0));
+  const max = Math.max(1, target ?? 0, ...days.map((day) => value(day) ?? 0));
   const unit = nutrient === "kcal" ? "kcal" : "g protein";
+  const targetHeight =
+    target && target > 0 ? Math.max(3, (target / max) * 112) : null;
   return (
     <ChartCard
       title={nutrient === "kcal" ? "Calories logged" : "Protein logged"}
@@ -44,6 +48,22 @@ export function HistoryChart({
         showsHorizontalScrollIndicator={days.length > 7}
       >
         <View style={{ flexDirection: "row", gap: 4, height: 164 }}>
+          {targetHeight !== null ? (
+            <View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 24,
+                height: targetHeight,
+                borderTopWidth: 1,
+                borderStyle: "dashed",
+                borderColor: c.muted,
+              }}
+              accessibilityLabel={`Daily target ${formatValue(target ?? null)} ${unit}`}
+            />
+          ) : null}
           {days.map((day) => {
             const amount = value(day);
             return (
@@ -93,6 +113,9 @@ export function HistoryChart({
         </Copy>
       </View>
       <Copy muted style={{ fontSize: 12 }}>
+        {target
+          ? `Dashed line is your ${formatValue(target)} ${unit} daily target. `
+          : ""}
         Gaps mean no complete estimate. Skipped meals and unknown values are
         excluded from averages.
       </Copy>

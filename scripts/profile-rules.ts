@@ -1,7 +1,7 @@
 // Generate the mobile profile rule schema from the same questions used by onboarding.
 // Run through apps/mobile's tsx; --check exits nonzero when the committed rules drift.
 import { readFileSync, writeFileSync } from 'node:fs';
-import { profileSteps, choicesFor } from '../apps/mobile/src/domain/profile';
+import { profileSteps, choicesFor, MAINTAIN_TOLERANCE_KG } from '../apps/mobile/src/domain/profile';
 const file = new URL('../firestore.rules', import.meta.url);
 const start = '    // BEGIN MOBILE PROFILE SCHEMA';
 const end = '    // END MOBILE PROFILE SCHEMA';
@@ -15,8 +15,8 @@ const checks = questions.map(q => {
     : `${ref} in ${quote(choices)}`
     : `(${ref} is string && ${ref}.size() > 0 && ${ref}.size() <= ${q.maxLength ?? 300})`;
   if (q.kind === 'time') check = `(${ref} is string && ${ref}.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'))`;
-  if (q.kind === 'number') check = `(${ref} is string && ${ref}.size() <= 300 && ${ref}.matches('^[0-9]+(\\\\.[0-9]{1,2})?$') && float(${ref}) ${q.key === 'metricValue' ? '>' : '>='} 0 && float(${ref}) <= 100000)`;
-  if (q.key === 'metricValue') return `(a.metric == 'Prefer not to share' ? !('metricValue' in a) : ${check})`;
+  if (q.kind === 'number') check = `(${ref} is string && ${ref}.size() <= 300 && ${ref}.matches('^[0-9]+(\\\\.[0-9]{1,2})?$') && float(${ref}) >= ${q.min ?? 0} && float(${ref}) <= ${q.max ?? 100000})`;
+  if (q.key === 'weeklyPace') return `((math.abs(float(a.targetWeightKg) - float(a.currentWeightKg)) > ${MAINTAIN_TOLERANCE_KG}) ? ${check} : !('weeklyPace' in a))`;
   if (q.when) {
     const condition = q.when.key === 'allergies' ? `${quote(q.when.value)} in a.allergies` : `a.${q.when.key} == ${quote(q.when.value)}`;
     return `((${condition}) ? ${check} : !(${quote(q.key)} in a))`;
@@ -37,7 +37,7 @@ const generated = `${start}
         && d.generation is string && d.generation.matches('^[A-Za-z0-9]{20}$')
         && d.updatedAt == request.time
         && d.profile is map && d.profile.keys().hasOnly(['version', 'answers', 'updatedAt'])
-        && d.profile.version == 1 && d.profile.updatedAt is string && d.profile.updatedAt.size() <= 40
+        && d.profile.version == 2 && d.profile.updatedAt is string && d.profile.updatedAt.size() <= 40
         && validMobileAnswers(d.profile.answers);
     }
     match /mobileProfiles/{uid} {

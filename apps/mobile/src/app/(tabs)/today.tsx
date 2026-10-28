@@ -21,6 +21,7 @@ import {
 } from "../../components/MobileFrame";
 import { useApp } from "../../data/store";
 import { dailyNutrition, formatValue, localDate } from "../../domain/meals";
+import { calculateTargets } from "../../domain/targets";
 import { colors as c } from "../../theme";
 
 export default function Today() {
@@ -38,12 +39,18 @@ export default function Today() {
   }, []);
   const entries = state.entries.filter((entry) => entry.date === date);
   const total = dailyNutrition(state.entries, date);
+  const targets = state.profile
+    ? calculateTargets(state.profile.answers)
+    : null;
   const count = state.templates.filter((meal) =>
     entries.some((entry) => entry.id === meal.id),
   ).length;
   const extra = entries.filter(
     (entry) => !state.templates.some((meal) => meal.id === entry.id),
   );
+  const eaten = total.kcal;
+  const remaining =
+    targets && eaten !== null ? targets.kcal - eaten : null;
   const nextMeal = state.templates.find(
     (meal) => !entries.some((entry) => entry.id === meal.id),
   );
@@ -86,16 +93,39 @@ export default function Today() {
       >
         <View style={s.row}>
           <View style={{ flex: 1, gap: 5 }}>
-            <Text style={s.label}>LOGGED SO FAR</Text>
+            <Text style={s.label}>
+              {targets ? "EATEN TODAY" : "LOGGED SO FAR"}
+            </Text>
             <Text style={s.energy}>
               {formatValue(total.kcal)}
-              <Text style={s.unit}> kcal</Text>
+              <Text style={s.unit}>
+                {targets ? ` / ${targets.kcal} kcal` : " kcal"}
+              </Text>
             </Text>
             <Text style={s.date}>
-              {confirmedCount} meals confirmed · estimates
+              {targets && remaining !== null
+                ? remaining >= 0
+                  ? `${formatValue(remaining)} kcal remaining`
+                  : `${formatValue(Math.abs(remaining))} kcal over target`
+                : `${confirmedCount} meals confirmed · estimates`}
             </Text>
           </View>
-          <RoutineRing count={count} total={state.templates.length} size={82} />
+          {targets ? (
+            <RoutineRing
+              count={eaten ?? 0}
+              total={targets.kcal}
+              size={82}
+              caption="OF TARGET"
+              center={
+                eaten === null
+                  ? "—"
+                  : `${Math.round((eaten / Math.max(targets.kcal, 1)) * 100)}%`
+              }
+              accessibilityLabel={`${formatValue(eaten)} of ${targets.kcal} kilocalories eaten`}
+            />
+          ) : (
+            <RoutineRing count={count} total={state.templates.length} size={82} />
+          )}
         </View>
         <View
           style={[
@@ -173,12 +203,26 @@ export default function Today() {
           <>
             <Text style={s.energy}>
               {formatValue(total.kcal)}
-              <Text style={s.unit}> kcal logged</Text>
+              <Text style={s.unit}>
+                {targets ? ` / ${targets.kcal} kcal` : " kcal logged"}
+              </Text>
             </Text>
-            <Nutrition total={total} />
+            <Nutrition
+              total={total}
+              target={
+                targets
+                  ? {
+                      protein: targets.protein,
+                      carbs: targets.carbs,
+                      fat: targets.fat,
+                    }
+                  : undefined
+              }
+            />
             <Copy muted>
-              Only confirmed meals contribute to these estimates. Unlogged and
-              skipped meals don’t count as eaten.
+              {targets
+                ? "Confirmed meals compared with your estimated daily target. This is not medical advice."
+                : "Only confirmed meals contribute to these estimates. Unlogged and skipped meals don’t count as eaten."}
             </Copy>
           </>
         ) : (

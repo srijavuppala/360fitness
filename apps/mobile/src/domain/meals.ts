@@ -1,5 +1,6 @@
 import { MealPrep, validatePrep } from "./meal-prep";
 import {
+  migrateSavedProfile,
   PersonalProfile,
   ProfileDraft,
   validateProfile,
@@ -182,6 +183,14 @@ export function parseSavedState(raw: string): AppState {
     );
   }
   if (value.mealPrep !== undefined) validatePrep(value.mealPrep);
+  const { profile, profileDraft } = migrateSavedProfile(
+    value.profile,
+    value.profileDraft,
+  );
+  if (profile) value.profile = profile;
+  else delete value.profile;
+  if (profileDraft) value.profileDraft = profileDraft;
+  else delete value.profileDraft;
   if (value.profile !== undefined) validateProfile(value.profile);
   if (value.profileDraft !== undefined)
     validateProfileDraft(value.profileDraft);

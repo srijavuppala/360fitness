@@ -1,4 +1,5 @@
 import { AppState, copyMeal, Food, Meal } from "./meals";
+import type { ProfileAnswers } from "./profile";
 
 const food = (
   id: string,
@@ -50,6 +51,21 @@ export const sampleMeals: Meal[] = [
     ],
   },
 ];
+
+/** Complete V1 onboarding answers used by tests and cloud fixtures. */
+export const completeProfileAnswers: ProfileAnswers = {
+  age: "25–34",
+  sex: "Female",
+  heightCm: "165",
+  currentWeightKg: "72.5",
+  primaryGoal: "Support my fitness",
+  targetWeightKg: "68",
+  weeklyPace: "Steady · 0.5 kg a week",
+  outcome: "Train three days each week",
+  activity: "Moderately active",
+  diet: "No specific diet",
+  allergies: ["None known"],
+};
 
 export function initialState(): AppState {
   return {

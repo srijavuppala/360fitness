@@ -39,3 +39,17 @@ export function averageLogged(
     ? known.reduce((sum, value) => sum + value, 0) / known.length
     : null;
 }
+
+/** Days whose known intake sits within ±10% of the daily target. */
+export function daysOnTarget(
+  days: HistoryDay[],
+  target: number,
+  nutrient: keyof Nutrients = "kcal",
+  band = 0.1,
+): number {
+  if (!(target > 0)) return 0;
+  return days.filter((day) => {
+    const value = day.nutrition?.[nutrient];
+    return value != null && Math.abs(value - target) <= target * band;
+  }).length;
+}

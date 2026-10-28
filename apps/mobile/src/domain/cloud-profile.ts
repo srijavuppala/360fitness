@@ -1,4 +1,8 @@
-import { PersonalProfile, validateProfile } from "./profile";
+import {
+  migrateSavedProfile,
+  PersonalProfile,
+  validateProfile,
+} from "./profile";
 
 export type CloudProfile = {
   schemaVersion: 1;
@@ -18,6 +22,14 @@ export function parseCloudProfile(value: unknown): CloudProfile {
     !/^[A-Za-z0-9]{20}$/.test(data.generation)
   )
     throw new Error("This cloud profile needs a newer app version.");
+  if ((data.profile as { version?: unknown })?.version === 1) {
+    const { profile } = migrateSavedProfile(data.profile, undefined);
+    if (!profile)
+      throw new Error(
+        "This cloud copy was saved before weight goals were added. Save your current profile to replace it.",
+      );
+    data.profile = profile;
+  }
   validateProfile(data.profile);
   return {
     schemaVersion: 1,

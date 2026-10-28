@@ -197,14 +197,14 @@ describe('the rules file', () => {
 });
 
 const mobileAnswers = {
-  age: '25–34', metric: 'Prefer not to share', primaryGoal: 'Build consistent habits',
-  outcome: 'Cook at home', activity: 'Moderately active', diet: 'No specific diet',
-  allergies: ['None known'], workouts: ['Walking'], workoutFrequency: '1–2 days a week',
-  tracking: 'Quick meal check-ins', notifications: 'Off', voice: 'Text only', checkInTime: '19:30',
+  age: '25–34', sex: 'Female', heightCm: '165', currentWeightKg: '72.5',
+  primaryGoal: 'Build consistent habits', targetWeightKg: '68',
+  weeklyPace: 'Steady · 0.5 kg a week', outcome: 'Cook at home',
+  activity: 'Moderately active', diet: 'No specific diet', allergies: ['None known'],
 };
 const mobileRecord = (answers = mobileAnswers, revision = 1) => ({
   schemaVersion: 1, revision, generation: 'abcdefghijklmnopqrst', updatedAt: serverTimestamp(),
-  profile: { version: 1, updatedAt: '2026-10-08T12:00:00.000Z', answers },
+  profile: { version: 2, updatedAt: '2026-10-08T12:00:00.000Z', answers },
 });
 const verified = (uid = ALICE) => testEnv.authenticatedContext(uid, { email_verified: true }).firestore();
 describe('mobile onboarding profiles', () => {
@@ -229,10 +229,9 @@ describe('mobile onboarding profiles', () => {
     const missing = { ...mobileAnswers }; delete missing.age;
     for (const answers of [missing, { ...mobileAnswers, admin: true },
       { ...mobileAnswers, outcome: 'x'.repeat(301) }, { ...mobileAnswers, activity: 'invented' },
-      { ...mobileAnswers, allergies: ['Milk', 'None known'] }, { ...mobileAnswers, workouts: ['Walking', 'Walking'] },
-      { ...mobileAnswers, checkInTime: '7:30 PM' }, { ...mobileAnswers, metricValue: '72' },
-      { ...mobileAnswers, metric: 'Weight (kg)', metricValue: '-1' },
-      { ...mobileAnswers, metric: 'Weight (kg)', metricValue: '100001' },
+      { ...mobileAnswers, allergies: ['Milk', 'None known'] },
+      { ...mobileAnswers, heightCm: '90' }, { ...mobileAnswers, currentWeightKg: '24' },
+      { ...mobileAnswers, targetWeightKg: '400' },
       { ...mobileAnswers, diet: 'Other' }]) {
       await assertFails(setDoc(ref, mobileRecord(answers)));
     }
@@ -246,20 +245,16 @@ describe('mobile onboarding profiles', () => {
     await assertFails(setDoc(ref, mobileRecord()));
     await assertFails(setDoc(ref, mobileRecord(mobileAnswers, 3)));
   });
-  it('accepts optional answers, conditional answers and canonical time', async () => {
+  it('accepts conditional diet and allergy details and maintain-weight without a pace', async () => {
     const ref = doc(verified(), `mobileProfiles/${ALICE}`);
     await assertSucceeds(setDoc(ref, mobileRecord({ ...mobileAnswers,
-      metric: 'Weight (kg)', metricValue: '72.5', diet: 'Other', dietOther: 'My preference',
-      allergies: ['Other'], allergyOther: 'Test allergy', checkInTime: '00:00',
+      diet: 'Other', dietOther: 'My preference',
+      allergies: ['Other'], allergyOther: 'Test allergy',
     })));
-  });
-});
-
-describe('spoken diet explanations', () => {
-  it('accepts a bounded optional diet plan and rejects oversized text', async () => {
-    const ref = doc(verified(), `mobileProfiles/${ALICE}`);
-    await assertFails(setDoc(ref, mobileRecord({ ...mobileAnswers, dietPlan: 'x'.repeat(1001) })));
-    await assertSucceeds(setDoc(ref, mobileRecord({ ...mobileAnswers, dietPlan: 'x'.repeat(1000) })));
+    await assertSucceeds(deleteDoc(ref));
+    const maintain = { ...mobileAnswers, targetWeightKg: '72.5' };
+    delete maintain.weeklyPace;
+    await assertSucceeds(setDoc(ref, mobileRecord(maintain)));
   });
 });
 
