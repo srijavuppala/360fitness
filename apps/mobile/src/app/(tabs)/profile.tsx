@@ -10,6 +10,7 @@ import {
 import { useApp } from "../../data/store";
 import { initialState } from "../../domain/fixtures";
 import { answerLabel, goalLabels } from "../../domain/profile";
+import { calculateTargets, directionLabel } from "../../domain/targets";
 import { calorieTrackerNotice } from "../../domain/thirdPartyNotices";
 import { colors as c } from "../../theme";
 
@@ -24,6 +25,9 @@ export default function Profile() {
     | null
   >(null);
   const [message, setMessage] = useState("");
+  const targets = state.profile
+    ? calculateTargets(state.profile.answers)
+    : null;
   return (
     <MobileFrame
       bottomInset={false}
@@ -90,6 +94,12 @@ export default function Profile() {
             ? answerLabel(state.profile.answers, "primaryGoal")
             : goalLabels[state.goal]}
         </Text>
+        {targets ? (
+          <Copy muted>
+            {targets.kcal.toLocaleString("en-US")} kcal a day ·{" "}
+            {directionLabel(targets)}. Estimate, not medical advice.
+          </Copy>
+        ) : null}
         <Button
           icon="options-outline"
           onPress={() => router.push("/preferences")}
