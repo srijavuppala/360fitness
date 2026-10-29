@@ -104,7 +104,7 @@ export const profileSteps: {
       { key: "age", label: "Your age range", kind: "single", required: true },
       {
         key: "sex",
-        label: "Sex for calorie estimates",
+        label: "Gender",
         kind: "single",
         required: true,
         hint: "Used only in the standard formula for resting energy use. Prefer not to say uses an average of the two.",
