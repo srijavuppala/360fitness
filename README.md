@@ -333,7 +333,7 @@ The priority is a dependable daily meal workflow: correct saves, visible logged 
 
 Use [U01–U13 in the feedback backlog](docs/USER-FEEDBACK-BACKLOG.md) for the latest requirements. The requested “30-day option” needs its intended context clarified even though history already offers 30-day charts. Google sign-in and Google Play release are separate tasks. The [feature audit](docs/FEATURE-COVERAGE-AUDIT.md) covers the wider product.
 
-Use a focused `codex/<change>` branch and pull request. Describe what the user can do afterward, backend/schema changes, migration or permission impact, and acceptance evidence. Keep credentials out of commits. Preserve attribution: chart/estimate-import adaptations retain their [upstream MIT notice](apps/mobile/licenses/CalorieTracker-MIT.txt).
+Use a focused `feature/<change>` (new work or refactors), `fix/<change>` (bug fixes) or `docs/<change>` branch and pull request. Describe what the user can do afterward, backend/schema changes, migration or permission impact, and acceptance evidence. Keep credentials out of commits. Preserve attribution: chart/estimate-import adaptations retain their [upstream MIT notice](apps/mobile/licenses/CalorieTracker-MIT.txt).
 
 ## Further reading
 

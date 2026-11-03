@@ -469,7 +469,10 @@ function ProfileSummary({ profile }: { profile: PersonalProfile }) {
     <>
       <Copy>{answerLabel(profile.answers, "primaryGoal")}</Copy>
       <Copy muted>{answerLabel(profile.answers, "outcome")}</Copy>
-      <Copy muted>Check-in: {answerLabel(profile.answers, "checkInTime")}</Copy>
+      <Copy muted>
+        {answerLabel(profile.answers, "currentWeightKg")} now · target{" "}
+        {answerLabel(profile.answers, "targetWeightKg")}
+      </Copy>
     </>
   );
 }

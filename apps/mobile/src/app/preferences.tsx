@@ -41,6 +41,8 @@ import {
   resumeProfile,
 } from "../domain/profile-flow";
 import { VoiceTextField } from "../components/VoiceTextField";
+import { TargetSummary } from "../components/TargetSummary";
+import { calculateTargets } from "../domain/targets";
 import { colors as c } from "../theme";
 
 export default function Preferences() {
@@ -53,13 +55,10 @@ function Questionnaire() {
   const insets = useSafeAreaInsets();
   const compact = height - insets.top - insets.bottom < 700;
   const [answers, setAnswers] = useState<ProfileAnswers>(() => {
-    const saved = {
+    return {
       ...(state.profileDraft?.answers ??
         state.profile?.answers ?? { primaryGoal: goalLabels[state.goal] }),
     };
-    if (typeof saved.checkInTime === "string")
-      saved.checkInTime = formatCheckInTime(saved.checkInTime);
-    return saved;
   });
   const [cursor, setCursor] = useState<ProfileCursor>(() =>
     resumeProfile(state.profileDraft, !!state.profile),
@@ -135,10 +134,10 @@ function Questionnaire() {
     setAnswers((previous) => changeAnswer(previous, key, value));
     setError("");
   }
-  const title =
-    question?.key === "metricValue"
-      ? `Current measurement (${String(answers.metric).match(/\((.*?)\)/)?.[1] ?? ""})`
-      : question?.label;
+  const title = question?.unit
+    ? `${question.label} (${question.unit})`
+    : question?.label;
+  const targets = review ? calculateTargets(answers) : null;
   return (
     <MobileFrame
       key={cursor}
@@ -244,6 +243,7 @@ function Questionnaire() {
               Tap a section to review or change your answers.
             </Copy>
           </View>
+          {targets ? <TargetSummary targets={targets} /> : null}
           <View style={[s.grid, { gap: 8 }]}>
             {profileSteps.map((group, step) => (
               <Pressable
@@ -293,21 +293,17 @@ function Questionnaire() {
               {title}
             </Text>
             <Text style={s.subtitle}>
-              {question!.key === "notifications" || question!.key === "voice"
-                ? "Preference only. Automatic check-ins and reminders aren’t active yet."
-                : !question!.required && compact
-                  ? "Optional · You can skip this for now."
-                  : question!.kind === "multi"
-                    ? "Choose all that apply to you."
-                    : question!.kind === "single"
-                      ? "Choose the option that fits you best."
-                      : question!.key === "checkInTime"
-                        ? "Your local time, with AM or PM. No reminder is scheduled yet."
-                        : question!.key === "outcome"
-                          ? "For example, cook at home three evenings a week."
-                          : question!.key === "dietPlan"
-                            ? "Tell us about your meals and what you’d like to change."
-                            : "A little context helps make your profile yours."}
+              {!question!.required && compact
+                ? "Optional · You can skip this for now."
+                : question!.kind === "multi"
+                  ? "Choose all that apply to you."
+                  : question!.kind === "single"
+                    ? "Choose the option that fits you best."
+                    : question!.key === "targetWeightKg"
+                      ? "We use it to estimate your daily calories and nutrients."
+                      : question!.key === "outcome"
+                        ? "For example, cook at home three evenings a week."
+                        : "A little context helps make your profile yours."}
             </Text>
           </View>
           <QuestionField
@@ -453,7 +449,13 @@ function QuestionField({
           ? () => onChange(q.key, formatCheckInTime(value))
           : undefined
       }
-      placeholder={q.kind === "time" ? "7:30 PM" : "Enter an amount"}
+      placeholder={
+        q.kind === "time"
+          ? "7:30 PM"
+          : q.unit
+            ? `${q.min}–${q.max} ${q.unit}`
+            : "Enter an amount"
+      }
       placeholderTextColor={c.muted}
     />
   );

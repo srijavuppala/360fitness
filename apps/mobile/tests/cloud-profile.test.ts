@@ -2,24 +2,14 @@ import { strict as assert } from "node:assert";
 import { test } from "node:test";
 import { assertRevision, parseCloudProfile } from "../src/domain/cloud-profile";
 import { saveProfile } from "../src/domain/profile";
-import { initialState } from "../src/domain/fixtures";
+import { completeProfileAnswers, initialState } from "../src/domain/fixtures";
 import { accountError } from "../src/services/cloud/errors";
 
 export const validProfile = () =>
   saveProfile(initialState(), {
-    age: "25–34",
-    metric: "Prefer not to share",
+    ...completeProfileAnswers,
     primaryGoal: "Build consistent habits",
     outcome: "Cook at home",
-    activity: "Moderately active",
-    diet: "No specific diet",
-    allergies: ["None known"],
-    workouts: ["Walking"],
-    workoutFrequency: "1–2 days a week",
-    tracking: "Quick meal check-ins",
-    notifications: "Off",
-    voice: "Text only",
-    checkInTime: "19:30",
   }).profile!;
 
 test("cloud restore rejects unknown schema, invalid revision and incomplete onboarding", () => {

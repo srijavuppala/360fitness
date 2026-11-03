@@ -15,8 +15,9 @@ import {
   styles,
 } from "../../components/ui";
 import { HistoryChart } from "../../components/HistoryChart";
-import { historyDays, averageLogged } from "../../domain/analytics";
+import { historyDays, averageLogged, daysOnTarget } from "../../domain/analytics";
 import { formatValue, localDate } from "../../domain/meals";
+import { calculateTargets } from "../../domain/targets";
 import { useApp } from "../../data/store";
 import { colors as c } from "../../theme";
 
@@ -33,6 +34,14 @@ export default function History() {
   const knownDays = days.filter(
     (day) => day.nutrition?.[nutrient] != null,
   ).length;
+  const targets = state.profile
+    ? calculateTargets(state.profile.answers)
+    : null;
+  const dailyTarget =
+    nutrient === "kcal" ? targets?.kcal : targets?.protein;
+  const onTarget = dailyTarget
+    ? daysOnTarget(days, dailyTarget, nutrient)
+    : 0;
   return (
     <Screen>
       <DemoBanner />
@@ -90,6 +99,14 @@ export default function History() {
             </Copy>
           </View>
         </View>
+        {targets ? (
+          <Copy muted style={{ fontSize: 12, marginTop: 10 }}>
+            {onTarget} of {knownDays} logged{" "}
+            {knownDays === 1 ? "day" : "days"} within 10% of your{" "}
+            {formatValue(dailyTarget ?? null)}{" "}
+            {nutrient === "kcal" ? "kcal" : "g protein"} target.
+          </Copy>
+        ) : null}
         <Copy muted style={{ fontSize: 12 }}>
           Average uses {knownDays} {knownDays === 1 ? "day" : "days"} with
           complete {nutrient === "kcal" ? "calorie" : "protein"} estimates.
@@ -123,6 +140,7 @@ export default function History() {
         selected={selected.date}
         nutrient={nutrient}
         onSelect={setDate}
+        target={dailyTarget}
       />
       <Section
         title={new Date(`${selected.date}T12:00:00`).toLocaleDateString(
@@ -137,7 +155,18 @@ export default function History() {
             {formatValue(selected.nutrition.kcal)}
             <Text style={{ fontSize: 14, color: c.muted }}> kcal logged</Text>
           </Text>
-          <Nutrition total={selected.nutrition} />
+          <Nutrition
+            total={selected.nutrition}
+            target={
+              targets
+                ? {
+                    protein: targets.protein,
+                    carbs: targets.carbs,
+                    fat: targets.fat,
+                  }
+                : undefined
+            }
+          />
         </Card>
       ) : (
         <Card>

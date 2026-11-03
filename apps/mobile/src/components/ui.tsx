@@ -363,7 +363,13 @@ export function MealCard({
     </Pressable>
   );
 }
-export function Nutrition({ total }: { total: Nutrients }) {
+export function Nutrition({
+  total,
+  target,
+}: {
+  total: Nutrients;
+  target?: { protein: number; carbs: number; fat: number };
+}) {
   return (
     <View style={styles.macros}>
       {(
@@ -377,7 +383,11 @@ export function Nutrition({ total }: { total: Nutrients }) {
           <View style={[styles.dot, { backgroundColor: color }]} />
           <Text style={styles.macroValue}>
             {formatValue(total[key])}
-            <Text style={styles.unit}> g</Text>
+            {target ? (
+              <Text style={styles.unit}> / {target[key]} g</Text>
+            ) : (
+              <Text style={styles.unit}> g</Text>
+            )}
           </Text>
           <Copy muted style={{ fontSize: 12 }}>
             {label}
@@ -391,16 +401,25 @@ export function RoutineRing({
   count,
   total,
   size = 138,
+  caption = "CHECKED IN",
+  center,
+  accessibilityLabel,
 }: {
   count: number;
   total: number;
   size?: number;
+  caption?: string;
+  center?: string;
+  accessibilityLabel?: string;
 }) {
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
+  const compact = size < 100;
   return (
     <View
-      accessibilityLabel={`${count} of ${total} usual meals checked in`}
+      accessibilityLabel={
+        accessibilityLabel ?? `${count} of ${total} usual meals checked in`
+      }
       style={{
         width: size,
         height: size,
@@ -437,12 +456,22 @@ export function RoutineRing({
           transform="rotate(-90 64 64)"
         />
       </Svg>
-      <Text style={{ color: c.text, fontSize: 34, fontWeight: "600" }}>
-        {count}
-        <Text style={{ color: c.muted, fontSize: 18 }}>/{total}</Text>
+      <Text
+        style={{
+          color: c.text,
+          fontSize: center ? (compact ? 22 : 28) : compact ? 22 : 34,
+          fontWeight: "600",
+        }}
+      >
+        {center ?? count}
+        {center ? null : (
+          <Text style={{ color: c.muted, fontSize: compact ? 12 : 18 }}>
+            /{total}
+          </Text>
+        )}
       </Text>
       <Text style={{ color: c.muted, fontSize: 10, letterSpacing: 1 }}>
-        CHECKED IN
+        {caption}
       </Text>
     </View>
   );

@@ -12,9 +12,6 @@ export const profileSections = [
   "Your goals",
   "Daily life",
   "Food & diet",
-  "Movement",
-  "Check-ins",
-  "Extras",
 ];
 export function profilePages(answers: ProfileAnswers) {
   return profileSteps.flatMap((group, step) =>

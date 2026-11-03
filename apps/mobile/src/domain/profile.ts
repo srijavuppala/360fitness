@@ -11,12 +11,11 @@ export const options = {
     "65+",
     "Prefer not to say",
   ],
-  metric: [
-    "Weight (kg)",
-    "Weight (lb)",
-    "Waist (cm)",
-    "Waist (in)",
-    "Prefer not to share",
+  sex: ["Female", "Male", "Prefer not to say"],
+  weeklyPace: [
+    "Gentle · 0.25 kg a week",
+    "Steady · 0.5 kg a week",
+    "Faster · 0.75 kg a week",
   ],
   primaryGoal: [
     "Build consistent habits",
@@ -28,13 +27,6 @@ export const options = {
     "Lightly active",
     "Moderately active",
     "Very active",
-    "Varies day to day",
-  ],
-  schedule: [
-    "Regular daytime",
-    "Evenings or nights",
-    "Rotating shifts",
-    "Flexible",
     "Varies day to day",
   ],
   diet: [
@@ -61,73 +53,17 @@ export const options = {
     "Other",
     "Not sure",
   ],
-  mealTiming: [
-    "Regular mealtimes",
-    "Small meals throughout the day",
-    "Later in the day",
-    "Varies day to day",
-  ],
-  nutritionPriority: [
-    "Balanced meals",
-    "More protein",
-    "More fiber",
-    "More variety",
-    "Still exploring",
-  ],
-  workouts: [
-    "Walking",
-    "Running",
-    "Strength training",
-    "Cycling",
-    "Swimming",
-    "Yoga or mobility",
-    "Sports",
-    "Other",
-    "No preference yet",
-  ],
-  workoutFrequency: [
-    "Not currently",
-    "1–2 days a week",
-    "3–4 days a week",
-    "5+ days a week",
-    "Varies week to week",
-  ],
-  tracking: [
-    "Quick meal check-ins",
-    "Photos and label scans",
-    "Detailed food and portions",
-    "A mix of methods",
-  ],
-  notifications: ["Off", "Once daily", "Meal reminders", "A few times a week"],
-  voice: [
-    "Comfortable with voice",
-    "Maybe — let me choose each time",
-    "Text only",
-  ],
-  wearables: [
-    "None",
-    "Apple Watch",
-    "Fitbit",
-    "Garmin",
-    "Oura",
-    "WHOOP",
-    "Samsung Galaxy Watch",
-    "Smart scale",
-    "Other",
-  ],
 } as const;
 
 type OptionKey = keyof typeof options;
 export type AnswerKey =
   | OptionKey
-  | "metricValue"
+  | "heightCm"
+  | "currentWeightKg"
+  | "targetWeightKg"
   | "outcome"
   | "dietOther"
-  | "dietPlan"
-  | "allergyOther"
-  | "avoidedFoods"
-  | "checkInTime"
-  | "groceryBudget";
+  | "allergyOther";
 export type ProfileAnswers = Partial<Record<AnswerKey, string | string[]>>;
 export type ProfileDraft = {
   version: 1;
@@ -137,7 +73,8 @@ export type ProfileDraft = {
   question?: AnswerKey | "review";
 };
 export type PersonalProfile = {
-  version: 1;
+  /** Version 1 profiles used a weight-or-waist metric; see migrateProfileAnswers. */
+  version: 2;
   answers: ProfileAnswers;
   updatedAt: string;
 };
@@ -149,6 +86,10 @@ export type Question = {
   maxLength?: number;
   hint?: string;
   when?: { key: OptionKey; value: string };
+  /** Inclusive bounds for number questions. */
+  min?: number;
+  max?: number;
+  unit?: string;
 };
 export const profileSteps: {
   title: string;
@@ -162,17 +103,29 @@ export const profileSteps: {
     questions: [
       { key: "age", label: "Your age range", kind: "single", required: true },
       {
-        key: "metric",
-        label: "Your baseline metric",
+        key: "sex",
+        label: "Gender",
         kind: "single",
         required: true,
+        hint: "Used only in the standard formula for resting energy use. Prefer not to say uses an average of the two.",
       },
       {
-        key: "metricValue",
-        label: "Current measurement",
+        key: "heightCm",
+        label: "Your height",
         kind: "number",
         required: true,
-        hint: "Use the unit you selected above. This does not set a calorie target.",
+        min: 100,
+        max: 250,
+        unit: "cm",
+      },
+      {
+        key: "currentWeightKg",
+        label: "Your current weight",
+        kind: "number",
+        required: true,
+        min: 25,
+        max: 350,
+        unit: "kg",
       },
     ],
   },
@@ -185,6 +138,23 @@ export const profileSteps: {
         label: "Your primary goal",
         kind: "single",
         required: true,
+      },
+      {
+        key: "targetWeightKg",
+        label: "Your target weight",
+        kind: "number",
+        required: true,
+        min: 25,
+        max: 350,
+        unit: "kg",
+        hint: "Enter your current weight to maintain it. Your daily calorie and nutrient targets are estimated from this goal; they are not medical advice.",
+      },
+      {
+        key: "weeklyPace",
+        label: "How quickly to reach it",
+        kind: "single",
+        required: true,
+        hint: "A slower pace is easier to sustain. Targets never go below a safe daily minimum.",
       },
       {
         key: "outcome",
@@ -204,22 +174,15 @@ export const profileSteps: {
         label: "Typical activity level",
         kind: "single",
         required: true,
+        hint: "Used to estimate how many calories you use in a typical day.",
       },
-      { key: "schedule", label: "Work schedule or routine", kind: "single" },
     ],
   },
   {
     title: "Food, your way.",
-    subtitle: "Your preferences and the foods you look out for.",
+    subtitle: "So we can match meals to how you eat.",
     questions: [
       { key: "diet", label: "Diet preference", kind: "single", required: true },
-      {
-        key: "dietPlan",
-        label: "Describe your usual diet",
-        kind: "text",
-        maxLength: 1000,
-        hint: "Tell us what you usually eat, your meal times and changes you’d like to make. Type or use your voice. This does not create a meal plan or log food.",
-      },
       {
         key: "dietOther",
         label: "Describe your diet preference",
@@ -241,81 +204,6 @@ export const profileSteps: {
         required: true,
         when: { key: "allergies", value: "Other" },
       },
-      {
-        key: "avoidedFoods",
-        label: "Foods you avoid",
-        kind: "text",
-        hint: "Preferences or intolerances, separate from the allergies above.",
-      },
-      { key: "mealTiming", label: "Typical meal timing", kind: "single" },
-      { key: "nutritionPriority", label: "Nutrition priority", kind: "single" },
-    ],
-  },
-  {
-    title: "Move your way.",
-    subtitle: "A starting point for future workout suggestions.",
-    questions: [
-      {
-        key: "workouts",
-        label: "Workout preferences",
-        kind: "multi",
-        required: true,
-      },
-      {
-        key: "workoutFrequency",
-        label: "Current workout frequency",
-        kind: "single",
-        required: true,
-      },
-    ],
-  },
-  {
-    title: "Set your rhythm.",
-    subtitle: "Choose how you would like to track and check in.",
-    questions: [
-      {
-        key: "tracking",
-        label: "Preferred tracking style",
-        kind: "single",
-        required: true,
-      },
-      {
-        key: "notifications",
-        label: "Preferred notification frequency",
-        kind: "single",
-        required: true,
-      },
-      {
-        key: "voice",
-        label: "Voice-based daily check-ins",
-        kind: "single",
-        required: true,
-      },
-      {
-        key: "checkInTime",
-        label: "Preferred check-in time",
-        kind: "time",
-        required: true,
-        hint: "Use your local time with AM or PM, for example 7:30 PM. Saving this does not schedule a reminder.",
-      },
-    ],
-  },
-  {
-    title: "A little further ahead.",
-    subtitle: "Optional details for future features. Skip either question.",
-    questions: [
-      {
-        key: "groceryBudget",
-        label: "Weekly grocery budget (USD)",
-        kind: "number",
-        hint: "For your household. Enter an amount, or leave blank.",
-      },
-      {
-        key: "wearables",
-        label: "Wearables or smart scales you use",
-        kind: "multi",
-        hint: "This records interest only. No device is connected and no health data is imported.",
-      },
     ],
   },
 ];
@@ -335,12 +223,31 @@ export const goalLabels: Record<Goal, string> = {
 export function choicesFor(key: AnswerKey): readonly string[] {
   return key in options ? options[key as OptionKey] : [];
 }
+/** Within this many kg of the current weight, the goal is to maintain. */
+export const MAINTAIN_TOLERANCE_KG = 0.5;
+
+/** Target minus current weight, or null until both are valid numbers. */
+export function weightChangeKg(answers: ProfileAnswers): number | null {
+  const valid = (key: "currentWeightKg" | "targetWeightKg") => {
+    const value = answers[key];
+    if (typeof value !== "string" || !/^\d+(\.\d{1,2})?$/.test(value.trim()))
+      return null;
+    const amount = Number(value);
+    return amount >= 25 && amount <= 350 ? amount : null;
+  };
+  const current = valid("currentWeightKg");
+  const target = valid("targetWeightKg");
+  return current === null || target === null ? null : target - current;
+}
+
 export function visibleQuestion(
   question: Question,
   answers: ProfileAnswers,
 ): boolean {
-  if (question.key === "metricValue")
-    return !!answers.metric && answers.metric !== "Prefer not to share";
+  if (question.key === "weeklyPace") {
+    const change = weightChangeKg(answers);
+    return change !== null && Math.abs(change) > MAINTAIN_TOLERANCE_KG;
+  }
   if (!question.when) return true;
   const value = answers[question.when.key];
   return Array.isArray(value)
@@ -434,14 +341,17 @@ export function stepErrors(
     if (q.kind === "number") {
       const text = String(value).trim();
       const amount = Number(text);
+      const min = q.min ?? 0;
+      const max = q.max ?? 100000;
       if (
         !/^\d+(\.\d{1,2})?$/.test(text) ||
         !Number.isFinite(amount) ||
-        amount > 100000 ||
-        (q.key === "metricValue" ? amount <= 0 : amount < 0)
+        amount < min ||
+        amount > max
       )
-        errors[q.key] =
-          `Enter ${q.key === "metricValue" ? "a positive amount" : "zero or a positive amount"}, up to 100,000, with at most two decimal places.`;
+        errors[q.key] = q.unit
+          ? `Enter ${q.label.toLowerCase()} from ${min} to ${max} ${q.unit}, with at most two decimal places.`
+          : `Enter zero or a positive amount, up to ${max.toLocaleString("en-US")}, with at most two decimal places.`;
     }
     if (q.kind === "time" && normalizeCheckInTime(String(value)) === null)
       errors[q.key] =
@@ -449,10 +359,163 @@ export function stepErrors(
   }
   return errors;
 }
+const POUNDS_TO_KG = 0.45359237;
+
+function knownAnswerKey(key: string): key is AnswerKey {
+  return allQuestions.some((question) => question.key === key);
+}
+
+function stripUnknownAnswers(
+  source: Record<string, unknown>,
+): ProfileAnswers {
+  const cleaned: ProfileAnswers = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (knownAnswerKey(key)) cleaned[key] = value as ProfileAnswers[AnswerKey];
+  }
+  return cleaned;
+}
+
+function firstIncomplete(
+  answers: ProfileAnswers,
+): { step: number; question: AnswerKey } | null {
+  const step = profileSteps.findIndex(
+    (_, index) => Object.keys(stepErrors(answers, index)).length > 0,
+  );
+  if (step === -1) return null;
+  const question = profileSteps[step].questions.find(
+    (q) =>
+      visibleQuestion(q, answers) &&
+      stepErrors(answers, step)[q.key] !== undefined,
+  )?.key;
+  return question ? { step, question } : { step, question: profileSteps[step].questions[0].key };
+}
+
+function repairDraft(draft: ProfileDraft): ProfileDraft {
+  const answers = migrateProfileAnswers(draft.answers) as ProfileAnswers;
+  if (draft.question === "review" || draft.step >= profileSteps.length)
+    return { version: 1, answers, step: profileSteps.length, question: "review" };
+  if (
+    draft.question &&
+    profileSteps.some((group) =>
+      group.questions.some((q) => q.key === draft.question),
+    )
+  ) {
+    const step = profileSteps.findIndex((group) =>
+      group.questions.some((q) => q.key === draft.question),
+    );
+    return { version: 1, answers, step, question: draft.question };
+  }
+  const incomplete = firstIncomplete(answers);
+  if (incomplete)
+    return {
+      version: 1,
+      answers,
+      step: incomplete.step,
+      question: incomplete.question,
+    };
+  return { version: 1, answers, step: profileSteps.length, question: "review" };
+}
+
+/**
+ * Convert answers saved before body stats replaced the weight-or-waist metric.
+ * A weight carries over as current weight; a waist value is dropped rather than
+ * relabelled. Retired survey keys are stripped so old JSON still loads.
+ */
+export function migrateProfileAnswers(answers: unknown): unknown {
+  if (!answers || typeof answers !== "object" || Array.isArray(answers))
+    return answers;
+  const source = answers as Record<string, unknown>;
+  let rest: Record<string, unknown> = source;
+  if ("metric" in source || "metricValue" in source) {
+    const { metric, metricValue, ...without } = source;
+    rest = without;
+    const amount =
+      typeof metricValue === "string" && /^\d+(\.\d{1,2})?$/.test(metricValue)
+        ? Number(metricValue)
+        : null;
+    const kg =
+      amount === null
+        ? null
+        : metric === "Weight (kg)"
+          ? amount
+          : metric === "Weight (lb)"
+            ? Math.round(amount * POUNDS_TO_KG * 10) / 10
+            : null;
+    if (kg !== null && kg >= 25 && kg <= 350 && !("currentWeightKg" in rest))
+      rest.currentWeightKg = String(kg);
+  }
+  return stripUnknownAnswers(rest);
+}
+
+/**
+ * Version 1 profiles lack the body stats that targets need, so they reopen as
+ * a draft at the first unanswered question instead of failing to load.
+ */
+export function migrateSavedProfile(
+  profile: unknown,
+  draft: unknown,
+): { profile?: PersonalProfile; profileDraft?: ProfileDraft } {
+  const result: { profile?: PersonalProfile; profileDraft?: ProfileDraft } =
+    {};
+  if (draft && typeof draft === "object")
+    result.profileDraft = repairDraft(draft as ProfileDraft);
+  if (!profile || typeof profile !== "object") return result;
+  const saved = profile as {
+    version?: unknown;
+    answers?: unknown;
+    updatedAt?: unknown;
+  };
+  const answers = migrateProfileAnswers(saved.answers);
+  try {
+    validateAnswerShape(answers);
+  } catch {
+    if (!result.profileDraft)
+      result.profileDraft = {
+        version: 1,
+        answers: {},
+        step: 0,
+        question: "age",
+      };
+    return result;
+  }
+  const incomplete = firstIncomplete(answers);
+  if (saved.version !== 1) {
+    if (!incomplete && typeof saved.updatedAt === "string")
+      result.profile = {
+        version: 2,
+        answers,
+        updatedAt: saved.updatedAt,
+      };
+    else if (!result.profileDraft && incomplete)
+      result.profileDraft = {
+        version: 1,
+        answers,
+        step: incomplete.step,
+        question: incomplete.question,
+      };
+    return result;
+  }
+  if (result.profileDraft) return result;
+  if (!incomplete)
+    result.profile = {
+      version: 2,
+      answers,
+      updatedAt: String((profile as PersonalProfile).updatedAt),
+    };
+  else
+    result.profileDraft = {
+      version: 1,
+      answers,
+      step: incomplete.step,
+      question: incomplete.question,
+    };
+  return result;
+}
+
 export function validateProfile(profile: PersonalProfile): void {
   if (
     !profile ||
-    profile.version !== 1 ||
+    profile.version !== 2 ||
     typeof profile.updatedAt !== "string" ||
     !Number.isFinite(Date.parse(profile.updatedAt))
   )
@@ -496,12 +559,8 @@ export function saveProfile(
     else if (typeof answer === "string" && answer.trim())
       cleaned[q.key] = answer.trim();
   }
-  if (typeof cleaned.checkInTime === "string") {
-    cleaned.checkInTime =
-      normalizeCheckInTime(cleaned.checkInTime) ?? cleaned.checkInTime;
-  }
   const profile: PersonalProfile = {
-    version: 1,
+    version: 2,
     answers: cleaned,
     updatedAt: new Date().toISOString(),
   };
@@ -520,6 +579,6 @@ export function saveProfile(
 export function answerLabel(answers: ProfileAnswers, key: AnswerKey): string {
   const value = answers[key];
   if (Array.isArray(value)) return value.join(", ") || "Not set";
-  if (key === "checkInTime" && value?.trim()) return formatCheckInTime(value);
-  return value?.trim() || "Not set";
+  const unit = allQuestions.find((q) => q.key === key)?.unit;
+  return value?.trim() ? (unit ? `${value.trim()} ${unit}` : value.trim()) : "Not set";
 }
