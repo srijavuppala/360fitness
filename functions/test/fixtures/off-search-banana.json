@@ -1,0 +1,76 @@
+{
+  "count": 8609,
+  "page": 1,
+  "page_size": 6,
+  "hits": [
+    {
+      "code": "2000000151418",
+      "product_name": "Fresh Banana",
+      "product_name_en": "Fresh Banana",
+      "brands": [
+        "Fresh Banana"
+      ]
+    },
+    {
+      "code": "5010251953760",
+      "product_name": "Bananas",
+      "product_name_en": "Bananas",
+      "brands": [
+        "Morrisons"
+      ]
+    },
+    {
+      "code": "01129441",
+      "product_name": "Banana",
+      "product_name_en": "Banana",
+      "brands": [
+        "fairtrade"
+      ],
+      "nutriments": {
+        "carbohydrates_100g": 23,
+        "energy-kcal_100g": 89,
+        "fat_100g": 0.3,
+        "proteins_100g": 1.1
+      }
+    },
+    {
+      "code": "8857122695117",
+      "product_name": "Chocolate dipped solar dried banana",
+      "product_name_en": "Chocolate dipped solar dried banana",
+      "brands": [
+        "\u0e1a\u0e32\u0e19\u0e32\u0e19\u0e48\u0e32\u0e42\u0e0b\u0e44\u0e0b\u0e15\u0e35\u0e49",
+        "Banana Society"
+      ],
+      "nutriments": {
+        "carbohydrates_100g": 72,
+        "energy-kcal_100g": 360,
+        "fat_100g": 8,
+        "proteins_100g": 3
+      }
+    },
+    {
+      "code": "0857682003009",
+      "product_name": "Organic Original Chewy Banana Bites",
+      "product_name_en": "Organic Original Chewy Banana Bites",
+      "brands": [
+        "Barnana"
+      ]
+    },
+    {
+      "code": "00517706",
+      "product_name": "Banana",
+      "product_name_en": "Banana",
+      "brands": [
+        "M&S",
+        "Marks & Spencer"
+      ],
+      "nutriments": {
+        "carbohydrates_100g": 20.3,
+        "energy-kcal_100g": 81,
+        "energy-kj_100g": 348,
+        "fat_100g": 0.1,
+        "proteins_100g": 1.2
+      }
+    }
+  ]
+}

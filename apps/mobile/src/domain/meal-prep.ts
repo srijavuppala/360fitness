@@ -88,7 +88,7 @@ export function validatePrepBatch(value: PrepBatch): void {
       ids.has(food.id) ||
       !text(food.name, 100) ||
       !text(food.unit, 30) ||
-      !["sample", "manual", "ai", "barcode"].includes(food.source)
+      !["sample", "manual", "ai", "barcode", "search"].includes(food.source)
     )
       throw new Error("Each ingredient needs a unique ID, name and unit.");
     ids.add(food.id);

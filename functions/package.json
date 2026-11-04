@@ -8,7 +8,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "node --test test/validate.test.js test/parseMeal.test.js test/usda.test.js test/gemini.test.js test/accessPolicy.test.js test/labelAnalysis.test.js test/mealPhotoAnalysis.test.js test/mealPrepAnalysis.test.js",
+    "test": "node --test test/validate.test.js test/parseMeal.test.js test/usda.test.js test/gemini.test.js test/accessPolicy.test.js test/labelAnalysis.test.js test/mealPhotoAnalysis.test.js test/mealPrepAnalysis.test.js test/foodSearch.test.js",
     "serve": "firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",

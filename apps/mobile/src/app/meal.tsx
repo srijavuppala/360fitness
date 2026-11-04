@@ -242,7 +242,9 @@ function MealEditor({
               ? "Includes AI-assisted estimates"
               : foods.some((food) => food.source === "barcode")
                 ? "Open Food Facts contributors · check package label"
-                : "Manually entered values"}
+                : foods.some((food) => food.source === "search")
+                  ? "Food database values · check your portion"
+                  : "Manually entered values"}
         </Copy>
         <Nutrition total={total} />
       </Card>
@@ -325,7 +327,11 @@ function MealEditor({
                       ? "AI-assisted estimate"
                       : food.source === "barcode"
                         ? `Open Food Facts · ${food.sourceBarcode ?? "barcode"}`
-                        : "Manual entry"}{" "}
+                        : food.source === "search"
+                          ? food.sourceId?.startsWith("usda:")
+                            ? "USDA FoodData Central"
+                            : "Open Food Facts"
+                          : "Manual entry"}{" "}
                   · {formatValue(foods[index].nutrition.kcal)} kcal
                 </Copy>
               </View>

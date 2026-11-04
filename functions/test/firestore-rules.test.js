@@ -145,6 +145,7 @@ describe('anything outside a user document', () => {
   const strayPaths = [
     'config/global',
     'analysisUsage/alice-uid',
+    'searchUsage/alice-uid',
     'experts/some-expert',
     'bookings/some-booking',
     'users',
