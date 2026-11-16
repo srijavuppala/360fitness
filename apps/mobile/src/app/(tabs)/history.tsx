@@ -17,7 +17,7 @@ import {
 import { HistoryChart } from "../../components/HistoryChart";
 import { historyDays, averageLogged, daysOnTarget } from "../../domain/analytics";
 import { formatValue, localDate } from "../../domain/meals";
-import { calculateTargets } from "../../domain/targets";
+import { buildNutritionGoal, shownValue } from "../../domain/nutrition-goal";
 import { useApp } from "../../data/store";
 import { colors as c } from "../../theme";
 
@@ -34,11 +34,13 @@ export default function History() {
   const knownDays = days.filter(
     (day) => day.nutrition?.[nutrient] != null,
   ).length;
-  const targets = state.profile
-    ? calculateTargets(state.profile.answers)
+  const goal = state.profile
+    ? buildNutritionGoal(state.profile.answers, state.health)
     : null;
-  const dailyTarget =
-    nutrient === "kcal" ? targets?.kcal : targets?.protein;
+  // A withheld target (null) draws no target line and counts no days on target.
+  const dailyTarget = goal
+    ? (shownValue(goal, nutrient) ?? undefined)
+    : undefined;
   const onTarget = dailyTarget
     ? daysOnTarget(days, dailyTarget, nutrient)
     : 0;
@@ -99,12 +101,16 @@ export default function History() {
             </Copy>
           </View>
         </View>
-        {targets ? (
+        {dailyTarget ? (
           <Copy muted style={{ fontSize: 12, marginTop: 10 }}>
             {onTarget} of {knownDays} logged{" "}
             {knownDays === 1 ? "day" : "days"} within 10% of your{" "}
             {formatValue(dailyTarget ?? null)}{" "}
             {nutrient === "kcal" ? "kcal" : "g protein"} target.
+          </Copy>
+        ) : goal && nutrient === "protein" ? (
+          <Copy muted style={{ fontSize: 12, marginTop: 10 }}>
+            No protein target is shown. See Profile to find out why.
           </Copy>
         ) : null}
         <Copy muted style={{ fontSize: 12 }}>
@@ -158,11 +164,11 @@ export default function History() {
           <Nutrition
             total={selected.nutrition}
             target={
-              targets
+              goal
                 ? {
-                    protein: targets.protein,
-                    carbs: targets.carbs,
-                    fat: targets.fat,
+                    protein: shownValue(goal, "protein"),
+                    carbs: shownValue(goal, "carbs"),
+                    fat: shownValue(goal, "fat"),
                   }
                 : undefined
             }

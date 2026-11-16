@@ -164,6 +164,7 @@ The app sends a product barcode to Open Food Facts and shows available nutrition
 | Usual meals and dated meal entries | Same local record | Survive restart after saving; no automatic cloud diary backup |
 | Meal prep plan | Local state; optional `mobileMealPrep/{uid}` copy | Review/save/restore with conflict checks |
 | Cloud profile | `mobileProfiles/{uid}` | Verified-owner access and schema validation |
+| Health information (optional) | Local `AppState.health`; optional `mobileHealthProfiles/{uid}` backup | Local by default; backup is a separate user action. See [health-aware goals](docs/health-aware-nutrition-goals.md) |
 | Callable AI usage counters | `analysisUsage/{uid}` | Backend-owned limits; not client-editable |
 | Login session | Firebase Auth persistence | Separate from meal/profile storage; app code does not store your password |
 | Unsaved meal editor | Screen state | Do not assume unsaved edits/imported estimates survive restart |
@@ -340,6 +341,7 @@ Use a focused `feature/<change>` (new work or refactors), `fix/<change>` (bug fi
 - [Mobile developer README](apps/mobile/README.md)
 - [Mobile architecture and cloud lifecycle](docs/mobile-architecture.md)
 - [Expo collaborators, testers and app users](docs/expo-and-app-users.md)
+- [Health-aware onboarding and nutrition goals](docs/health-aware-nutrition-goals.md)
 - [Meal prep](docs/meal-prep.md) and [voice onboarding](docs/voice-onboarding.md)
 - [Product scanner](docs/product-scanner-research.md)
 - [Product discovery](docs/product-blueprint/PRODUCT-DISCOVERY.md)

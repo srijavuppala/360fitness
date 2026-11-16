@@ -26,6 +26,7 @@ import { useApp } from "../data/store";
 import { CloudProfile } from "../domain/cloud-profile";
 import { answerLabel, PersonalProfile, saveProfile } from "../domain/profile";
 import { cloudConfigured, firebaseClient } from "../services/cloud/firebase";
+import { healthRepository } from "../services/cloud/health-repository";
 import { profileRepository } from "../services/cloud/profile-repository";
 import { accountError } from "../services/cloud/errors";
 
@@ -390,6 +391,68 @@ export default function Account() {
                   : "Your cloud profile will appear after connecting."}
               </Copy>
             )}
+          </Card>
+          <Section title="Health information (optional)" />
+          <Card>
+            <Copy muted>
+              Health answers stay on this device unless you choose to back them
+              up here. A backup is stored in your private account space,
+              readable only by you. You can delete it at any time.
+            </Copy>
+            <Button
+              secondary
+              disabled={busy || !connected || !state.health}
+              onPress={() =>
+                void run(async () => {
+                  await healthRepository(firebaseClient().db, account.uid).save(
+                    state.health!,
+                  );
+                  setMessage("Your health information is backed up.");
+                })
+              }
+            >
+              Back up my health information
+            </Button>
+            <Button
+              secondary
+              disabled={busy || !connected || !ready}
+              onPress={() =>
+                void run(async () => {
+                  const saved = await healthRepository(
+                    firebaseClient().db,
+                    account.uid,
+                  ).get();
+                  if (!saved) {
+                    setMessage("No health backup in this account.");
+                    return;
+                  }
+                  await update((previous) => ({
+                    ...previous,
+                    health: saved.health,
+                  }));
+                  setMessage("Health information restored to this device.");
+                })
+              }
+            >
+              Restore health information to this device
+            </Button>
+            <Button
+              secondary
+              disabled={busy || !connected}
+              onPress={() =>
+                void run(async () => {
+                  await healthRepository(
+                    firebaseClient().db,
+                    account.uid,
+                  ).remove();
+                  setMessage(
+                    "Health backup deleted. Your on-device answers remain.",
+                  );
+                })
+              }
+            >
+              Delete health backup
+            </Button>
           </Card>
           {review ? (
             <Card>
