@@ -22,6 +22,25 @@ export default function Add() {
         subtitle="However your day goes, you can make it your own."
       />
       <Card>
+        <Icon name="search-outline" color={c.accent} size={30} />
+        <Copy>Search foods</Copy>
+        <Copy muted>
+          Find foods by name or brand, or add one you’ve logged before. Review
+          portions before logging.
+        </Copy>
+        <Button
+          icon="search"
+          onPress={() =>
+            router.push({
+              pathname: "/search",
+              params: { mode: mode === "template" ? "template" : "log" },
+            })
+          }
+        >
+          Search foods
+        </Button>
+      </Card>
+      <Card>
         <Icon name="sparkles-outline" color={c.accent} size={30} />
         <Copy>Start with a meal photo</Copy>
         <Copy muted>
