@@ -45,3 +45,14 @@ jobs:
         working-directory: apps/mobile
       - run: npm run test:profiles
         working-directory: functions
+  workout-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Dependency-free package: Node runs the TypeScript directly, no install.
+      - run: npm test
+        working-directory: packages/workout-core

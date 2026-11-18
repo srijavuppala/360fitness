@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Local pre-push guard. Enable once per clone:
+#   git config core.hooksPath .githooks
+#
+# Blocks a push when the outgoing commits add likely secrets or credential
+# files. CI (.github/workflows/security.yml) runs gitleaks, dependency audits
+# and CodeQL as the authoritative check; this hook just catches mistakes
+# before they reach GitHub. Bypass only for a reviewed false positive:
+#   git push --no-verify
+set -euo pipefail
+
+zero=0000000000000000000000000000000000000000
+patterns='AIza[0-9A-Za-z_-]{35}|-----BEGIN ([A-Z]+ )?PRIVATE KEY-----|ghp_[0-9A-Za-z]{36}|github_pat_[0-9A-Za-z_]{40,}|sk-(ant-)?[A-Za-z0-9_-]{20,}|xox[abprs]-[0-9A-Za-z-]{10,}|AKIA[0-9A-Z]{16}|"private_key":'
+blocked_files='(^|/)(\.env(\.[a-z]+)?|[^/]*service-account[^/]*\.json|google-services\.json|GoogleService-Info\.plist|[^/]*\.(p8|p12|pem|jks|keystore|mobileprovision))$'
+allowed_files='(\.env\.example|\.env\.[a-z]+\.example)$'
+status=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue # deleting a branch
+  if [ "$remote_sha" = "$zero" ]; then
+    range=$(git merge-base "$local_sha" origin/main 2>/dev/null || true)
+    range=${range:+$range..}$local_sha
+  else
+    range="$remote_sha..$local_sha"
+  fi
+
+  files=$(git diff --name-only --diff-filter=AM "${range%%..*}" "$local_sha" 2>/dev/null || git show --name-only --format= "$local_sha")
+  bad=$(printf '%s\n' "$files" | grep -E "$blocked_files" | grep -vE "$allowed_files" || true)
+  if [ -n "$bad" ]; then
+    echo "pre-push: refusing to push credential-like files:" >&2
+    printf '  %s\n' $bad >&2
+    status=1
+  fi
+
+  hits=$(git log -p --no-color "$range" -- . ':(exclude)*package-lock.json' ':(exclude).githooks/*' 2>/dev/null | grep -E '^\+' | grep -nE "$patterns" || true)
+  if [ -n "$hits" ]; then
+    echo "pre-push: outgoing commits look like they contain secrets:" >&2
+    printf '%s\n' "$hits" | sed -E 's/(.{12}).*/  \1… (redacted)/' >&2
+    status=1
+  fi
+done
+
+if [ "$status" -ne 0 ]; then
+  echo "pre-push: remove the secret (rewrite the commit) and rotate it if it was ever shared." >&2
+  exit 1
+fi
+
+# Fast, dependency-free tests for the shared workout engine.
+if git diff --name-only "@{upstream}" HEAD 2>/dev/null | grep -q '^packages/workout-core/' || ! git rev-parse "@{upstream}" >/dev/null 2>&1; then
+  (cd packages/workout-core && node --test tests/*.test.ts >/dev/null) || {
+    echo "pre-push: packages/workout-core tests failed (cd packages/workout-core && npm test)." >&2
+    exit 1
+  }
+fi
+exit 0

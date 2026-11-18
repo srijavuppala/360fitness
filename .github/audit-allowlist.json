@@ -1,0 +1,12 @@
+{
+  "$comment": "Reviewed exceptions for scripts/audit-gate.mjs (gate level: high). Every entry needs a reason and an expiry; expired entries fail CI.",
+  "entries": [
+    {
+      "package_dir": "apps/mobile",
+      "advisory": "GHSA-qr28-fpjm-wq7f",
+      "package": "decode-uri-component (via query-string via expo-router)",
+      "reason": "Fix requires expo-router 58 / Expo SDK 58 upgrade. Input is app-internal route params, not untrusted network data.",
+      "expires": "2027-01-31"
+    }
+  ]
+}
