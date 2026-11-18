@@ -1,0 +1,20 @@
+{
+  "name": "@360fitness/health-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server and messaging router over the workout and glucose cores.",
+  "type": "module",
+  "exports": {
+    ".": "./src/health.ts"
+  },
+  "bin": {
+    "360fitness-health-mcp": "./bin/server.ts"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.ts",
+    "start": "node bin/server.ts"
+  }
+}

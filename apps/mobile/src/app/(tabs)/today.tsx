@@ -20,6 +20,7 @@ import {
   SettingsRow,
 } from "../../components/MobileFrame";
 import { useApp } from "../../data/store";
+import { tracksGlucose } from "../../domain/glucose";
 import { dailyNutrition, formatValue, localDate } from "../../domain/meals";
 import { buildNutritionGoal, shownValue } from "../../domain/nutrition-goal";
 import { colors as c } from "../../theme";
@@ -172,6 +173,17 @@ export default function Today() {
           <Icon name="add-circle-outline" color={c.accent} />
           <Text style={s.actionText}>Log a meal</Text>
         </Pressable>
+        {tracksGlucose(state.health) ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Log glucose"
+            onPress={() => router.push("/glucose")}
+            style={s.action}
+          >
+            <Icon name="water-outline" color={c.accent} />
+            <Text style={s.actionText}>Glucose</Text>
+          </Pressable>
+        ) : null}
       </View>
       <View style={s.next}>
         <Text style={s.label}>

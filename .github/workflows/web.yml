@@ -45,14 +45,19 @@ jobs:
         working-directory: apps/mobile
       - run: npm run test:profiles
         working-directory: functions
-  workout-core:
+  packages:
+    name: Shared packages (${{ matrix.package }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [workout-core, glucose-core, health-mcp]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # Dependency-free package: Node runs the TypeScript directly, no install.
+      # Dependency-free packages: Node runs the TypeScript directly, no install.
       - run: npm test
-        working-directory: packages/workout-core
+        working-directory: packages/${{ matrix.package }}

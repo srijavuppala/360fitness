@@ -127,6 +127,12 @@ export default function Profile() {
           onPress={() => router.push("/health")}
         />
         <SettingsRow
+          title="Glucose log"
+          detail="Optional · Self-measured readings · Saved on this device"
+          icon="water-outline"
+          onPress={() => router.push("/glucose")}
+        />
+        <SettingsRow
           title="Account & backup"
           detail="Sign in · save or restore your profile"
           icon="cloud-outline"

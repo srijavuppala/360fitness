@@ -1,6 +1,7 @@
 import { HealthProfile, validateHealthProfile } from "./health";
 import { MealPrep, validatePrep } from "./meal-prep";
 import { parseWorkoutState, type WorkoutState } from "./workouts";
+import { parseGlucoseState, type GlucoseState } from "./glucose";
 import {
   migrateSavedProfile,
   PersonalProfile,
@@ -48,6 +49,8 @@ export type AppState = {
   entries: Entry[];
   /** Workout goals and sessions (packages/workout-core). Optional so older saves load. */
   workouts?: WorkoutState;
+  /** Self-reported glucose readings (packages/glucose-core). Optional so older saves load. */
+  glucose?: GlucoseState;
 };
 export const nutrientKeys = ["kcal", "protein", "carbs", "fat"] as const;
 export const slots: Slot[] = ["Breakfast", "Lunch", "Dinner", "Snack"];
@@ -192,6 +195,7 @@ export function parseSavedState(raw: string): AppState {
   }
   if (value.mealPrep !== undefined) validatePrep(value.mealPrep);
   if (value.workouts !== undefined) value.workouts = parseWorkoutState(value.workouts);
+  if (value.glucose !== undefined) value.glucose = parseGlucoseState(value.glucose);
   if (value.health !== undefined) {
     // Optional section: an unreadable copy must not lock the user out of the
     // app. Dropping it falls back to the safe "not assessed" state.
