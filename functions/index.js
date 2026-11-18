@@ -151,6 +151,7 @@ export const deleteAccount = onCall(
     await firestore.doc(`searchUsage/${uid}`).delete();
     await firestore.doc(`mobileProfiles/${uid}`).delete();
     await firestore.doc(`mobileMealPrep/${uid}`).delete();
+    await firestore.doc(`mobileHealthProfiles/${uid}`).delete();
     await getAuth().deleteUser(uid);
 
     logger.info('Account deleted', { uid });

@@ -21,7 +21,7 @@ import {
 } from "../../components/MobileFrame";
 import { useApp } from "../../data/store";
 import { dailyNutrition, formatValue, localDate } from "../../domain/meals";
-import { calculateTargets } from "../../domain/targets";
+import { buildNutritionGoal, shownValue } from "../../domain/nutrition-goal";
 import { colors as c } from "../../theme";
 
 export default function Today() {
@@ -39,9 +39,11 @@ export default function Today() {
   }, []);
   const entries = state.entries.filter((entry) => entry.date === date);
   const total = dailyNutrition(state.entries, date);
-  const targets = state.profile
-    ? calculateTargets(state.profile.answers)
+  const goal = state.profile
+    ? buildNutritionGoal(state.profile.answers, state.health)
     : null;
+  // Calories are never withheld by the health-aware layer; macros come from `goal`.
+  const targets = goal?.generalTarget ?? null;
   const count = state.templates.filter((meal) =>
     entries.some((entry) => entry.id === meal.id),
   ).length;
@@ -219,11 +221,11 @@ export default function Today() {
             <Nutrition
               total={total}
               target={
-                targets
+                goal
                   ? {
-                      protein: targets.protein,
-                      carbs: targets.carbs,
-                      fat: targets.fat,
+                      protein: shownValue(goal, "protein"),
+                      carbs: shownValue(goal, "carbs"),
+                      fat: shownValue(goal, "fat"),
                     }
                   : undefined
               }
@@ -233,6 +235,12 @@ export default function Today() {
                 ? "Confirmed meals compared with your estimated daily target. This is not medical advice."
                 : "Only confirmed meals contribute to these estimates. Unlogged and skipped meals don’t count as eaten."}
             </Copy>
+            {goal?.requiresProfessionalReview ? (
+              <Copy muted>
+                Some targets are intentionally not shown because they may not
+                suit your health circumstances. See Profile for details.
+              </Copy>
+            ) : null}
           </>
         ) : (
           <>

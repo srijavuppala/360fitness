@@ -42,7 +42,7 @@ import {
 } from "../domain/profile-flow";
 import { VoiceTextField } from "../components/VoiceTextField";
 import { TargetSummary } from "../components/TargetSummary";
-import { calculateTargets } from "../domain/targets";
+import { buildNutritionGoal } from "../domain/nutrition-goal";
 import { colors as c } from "../theme";
 
 export default function Preferences() {
@@ -94,7 +94,12 @@ function Questionnaire() {
       );
       if (exit || finish)
         router.replace(
-          state.onboarding === "complete" ? "/(tabs)/profile" : "/welcome",
+          // First-time onboarding continues to the optional health section.
+          finish && state.onboarding !== "complete" && !state.health
+            ? "/health"
+            : state.onboarding === "complete"
+              ? "/(tabs)/profile"
+              : "/welcome",
         );
       else setCursor(next);
     } catch {
@@ -137,7 +142,8 @@ function Questionnaire() {
   const title = question?.unit
     ? `${question.label} (${question.unit})`
     : question?.label;
-  const targets = review ? calculateTargets(answers) : null;
+  const goal = review ? buildNutritionGoal(answers, state.health) : null;
+  const targets = goal?.generalTarget ?? null;
   return (
     <MobileFrame
       key={cursor}
@@ -243,7 +249,7 @@ function Questionnaire() {
               Tap a section to review or change your answers.
             </Copy>
           </View>
-          {targets ? <TargetSummary targets={targets} /> : null}
+          {targets ? <TargetSummary targets={targets} goal={goal} /> : null}
           <View style={[s.grid, { gap: 8 }]}>
             {profileSteps.map((group, step) => (
               <Pressable

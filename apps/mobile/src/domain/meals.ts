@@ -1,3 +1,4 @@
+import { HealthProfile, validateHealthProfile } from "./health";
 import { MealPrep, validatePrep } from "./meal-prep";
 import { parseWorkoutState, type WorkoutState } from "./workouts";
 import {
@@ -41,6 +42,8 @@ export type AppState = {
   mealPrep?: MealPrep;
   profile?: PersonalProfile;
   profileDraft?: ProfileDraft;
+  /** Optional, consented health context; absent for users who never answered. */
+  health?: HealthProfile;
   templates: Meal[];
   entries: Entry[];
   /** Workout goals and sessions (packages/workout-core). Optional so older saves load. */
@@ -189,6 +192,15 @@ export function parseSavedState(raw: string): AppState {
   }
   if (value.mealPrep !== undefined) validatePrep(value.mealPrep);
   if (value.workouts !== undefined) value.workouts = parseWorkoutState(value.workouts);
+  if (value.health !== undefined) {
+    // Optional section: an unreadable copy must not lock the user out of the
+    // app. Dropping it falls back to the safe "not assessed" state.
+    try {
+      validateHealthProfile(value.health);
+    } catch {
+      delete value.health;
+    }
+  }
   const { profile, profileDraft } = migrateSavedProfile(
     value.profile,
     value.profileDraft,
