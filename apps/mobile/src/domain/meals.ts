@@ -1,4 +1,5 @@
 import { MealPrep, validatePrep } from "./meal-prep";
+import { parseWorkoutState, type WorkoutState } from "./workouts";
 import {
   migrateSavedProfile,
   PersonalProfile,
@@ -40,6 +41,8 @@ export type AppState = {
   profileDraft?: ProfileDraft;
   templates: Meal[];
   entries: Entry[];
+  /** Workout goals and sessions (packages/workout-core). Optional so older saves load. */
+  workouts?: WorkoutState;
 };
 export const nutrientKeys = ["kcal", "protein", "carbs", "fat"] as const;
 export const slots: Slot[] = ["Breakfast", "Lunch", "Dinner", "Snack"];
@@ -183,6 +186,7 @@ export function parseSavedState(raw: string): AppState {
     );
   }
   if (value.mealPrep !== undefined) validatePrep(value.mealPrep);
+  if (value.workouts !== undefined) value.workouts = parseWorkoutState(value.workouts);
   const { profile, profileDraft } = migrateSavedProfile(
     value.profile,
     value.profileDraft,

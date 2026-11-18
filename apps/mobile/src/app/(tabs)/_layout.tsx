@@ -8,6 +8,7 @@ import { colors as c } from "../../theme";
 const icons: Record<string, IconName> = {
   today: "grid-outline",
   plan: "restaurant-outline",
+  train: "barbell-outline",
   history: "bar-chart-outline",
   profile: "person-outline",
 };
@@ -48,6 +49,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="today" options={{ title: "Today" }} />
       <Tabs.Screen name="plan" options={{ title: "My Plan" }} />
+      <Tabs.Screen name="train" options={{ title: "Train" }} />
       <Tabs.Screen name="history" options={{ title: "History" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
