@@ -126,7 +126,7 @@ flowchart TB
   Review --> Domain
 ```
 
-The companion website has its own React components and state implementation. It is not the phone app's server, and its browser data is not automatically shared with the native app. Historical Flutter code is retained for reference and is not part of the React Native runtime.
+The companion website has its own React components and state implementation. It is not the phone app's server, and its browser data is not automatically shared with the native app. The earlier Flutter code (root `lib/`, `web/` and `legacy/web-prototype`) was removed in November 2026; it remains in git history before commit `5823a0d` for reference only. The product is React Native + React only.
 
 ## How information moves
 
@@ -261,6 +261,8 @@ apps/
     app.config.ts + app.json    native configuration and permissions
     eas.json                    development / preview / production profiles
   web/                          companion React website
+packages/
+  workout-core/                 shared workout goal/tracking engine (app, MCP, messaging)
 functions/
   index.js                      exported cloud functions
   src/                          validation, providers and access policies
@@ -269,7 +271,6 @@ scripts/profile-rules.ts        generates/checks mobile profile rules
 firestore.rules                 database authorization boundary
 .github/workflows/              mobile, website and backend validation
 docs/                          architecture, setup, research and backlog
-lib/ + test/ + legacy/          historical Flutter/prototype code
 ```
 
 ## Run the project

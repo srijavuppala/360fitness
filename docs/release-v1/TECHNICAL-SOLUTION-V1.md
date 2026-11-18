@@ -216,7 +216,7 @@ flowchart TB
 | --- | --- | --- |
 | Client | One Expo app | Already the most complete. RN Web is the doctor/trainer demo link |
 | `apps/web` | Frozen | Its features are rebuilt properly in mobile |
-| Flutter / legacy | Leave in tree for V1 demo; remove after (Phase 0b) | Deleting now is noise; it must not be imported |
+| Flutter / legacy | **Removed November 18, 2026** (Phase 0b done). See git history before `5823a0d` | No Flutter in setup or CI going forward |
 | Shared math | `packages/core` once catalog exists (Phase 3). Until then, domain stays in mobile and the server **imports the same JSON** | Don’t block the demo on a monorepo refactor |
 | Backend | Keep Firebase | Fine at scale if each diary event is its own document |
 | AI route | **Server callable only.** Remove AI Logic | One prompt, one quota, keys stay server-side |
