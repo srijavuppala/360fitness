@@ -207,3 +207,15 @@ test("MCP server speaks JSON-RPC over stdio and persists to its data file", asyn
   const saved = JSON.parse(readFileSync(file, "utf8"));
   assert.equal(saved.sessions[0].source, "mcp");
 });
+
+test("parser stays fast on adversarial input (CodeQL polynomial-regex finding)", () => {
+  const evil = "0".repeat(100000) + "x";
+  const start = performance.now();
+  parseDuration(evil);
+  parseDistance(evil);
+  parseMessage(`ran ${evil}`, TODAY);
+  parseMessage(`goal ${evil}`, TODAY);
+  assert.ok(performance.now() - start < 200, "parsing a 100k-char message must stay well under 200 ms");
+  assert.equal(parseDuration("x1h 15"), 75, "numbers after letters still parse");
+  assert.equal(parseDistance("10.5km"), 10.5);
+});

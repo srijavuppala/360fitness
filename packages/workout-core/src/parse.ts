@@ -43,21 +43,27 @@ function detectIntensity(text: string): Intensity | undefined {
 }
 
 /** Minutes from "45 min", "1h", "1 hr 15", "1:30", "90m". */
-export function parseDuration(text: string): number | null {
-  const hm = text.match(/\b(\d{1,2}):(\d{2})\b(?!\s*(am|pm))/);
+/** Chat messages are short; capping length keeps every pattern linear-time. */
+export const MAX_MESSAGE_LENGTH = 300;
+const clip = (text: string) => text.slice(0, MAX_MESSAGE_LENGTH);
+
+export function parseDuration(input: string): number | null {
+  const text = clip(input);
+  const hm = text.match(/\b(\d{1,2}):(\d{2})\b(?! {0,2}(am|pm))/);
   if (hm) return Number(hm[1]) * 60 + Number(hm[2]);
-  const hours = text.match(/(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours)\b(?:\s*(\d{1,2})\s*(m|min|mins|minutes)?\b)?/);
+  const hours = text.match(/(?<![\d.])(\d{1,4}(?:\.\d{1,2})?) {0,2}(h|hr|hrs|hour|hours)\b(?: {0,2}(\d{1,2}) {0,2}(m|min|mins|minutes)?\b)?/);
   if (hours) return Math.round(Number(hours[1]) * 60 + (hours[3] ? Number(hours[3]) : 0));
-  const mins = text.match(/(\d+(?:\.\d+)?)\s*(m|min|mins|minute|minutes)\b/);
+  const mins = text.match(/(?<![\d.])(\d{1,4}(?:\.\d{1,2})?) {0,2}(m|min|mins|minute|minutes)\b/);
   if (mins) return Math.round(Number(mins[1]));
   return null;
 }
 
 /** Kilometres from "5k", "5 km", "3.1 miles", "10mi". */
-export function parseDistance(text: string): number | null {
-  const km = text.match(/(\d+(?:\.\d+)?)\s*(k|km|kms|kilometers?|kilometres?)\b/);
+export function parseDistance(input: string): number | null {
+  const text = clip(input);
+  const km = text.match(/(?<![\d.])(\d{1,4}(?:\.\d{1,2})?) {0,2}(k|km|kms|kilometers?|kilometres?)\b/);
   if (km) return Number(km[1]);
-  const mi = text.match(/(\d+(?:\.\d+)?)\s*(mi|mile|miles)\b/);
+  const mi = text.match(/(?<![\d.])(\d{1,4}(?:\.\d{1,2})?) {0,2}(mi|mile|miles)\b/);
   if (mi) return Math.round(Number(mi[1]) * 1.60934 * 100) / 100;
   return null;
 }
@@ -73,7 +79,7 @@ function detectDate(text: string, today: string): string | undefined {
 }
 
 function parseGoal(text: string): Command | null {
-  const number = text.match(/(\d+(?:\.\d+)?)/);
+  const number = text.match(/(?<![\d.])(\d{1,4}(?:\.\d{1,2})?)/);
   if (!number) return null;
   const target = Number(number[1]);
   let metric: GoalMetric = "sessions";
@@ -88,7 +94,7 @@ function parseGoal(text: string): Command | null {
 }
 
 export function parseMessage(input: string, today: string): Command | null {
-  const text = input.toLowerCase().replace(/[’']/g, "'").trim();
+  const text = clip(input).toLowerCase().replace(/[’']/g, "'").trim();
   if (!text) return null;
   if (/^(help|\?|commands|what can you do)/.test(text)) return { action: "help" };
   if (/^(status|progress|summary|how am i doing|week|this week)\b/.test(text)) return { action: "summary" };

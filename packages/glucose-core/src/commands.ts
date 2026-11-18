@@ -144,7 +144,7 @@ export function formatGlucoseReply(result: GlucoseResult): string {
 
 /** Chat phrases: "glucose 142 after lunch", "bg 6.2 fasting", "sugar 98 before dinner", "glucose summary". */
 export function parseGlucoseMessage(input: string): GlucoseCommand | null {
-  const text = input.toLowerCase().trim();
+  const text = input.slice(0, 300).toLowerCase().trim();
   if (!/\b(glucose|bg|blood sugar|sugar|bs|reading)\b/.test(text)) return null;
   if (/\b(summary|status|report|trend|week|average)\b/.test(text)) return { action: "glucose_summary", days: /\b30\b|month/.test(text) ? 30 : 14 };
   if (/\b(undo|delete last|remove last)\b/.test(text)) return { action: "undo_glucose" };
