@@ -44,7 +44,7 @@ Priority: **P0** = blocks launch · **P1** = launch-month follow-up.
 | P4 | Privacy policy lists every processor (Firebase/Google, USDA, Open Food Facts, Expo, any AI provider) and the user's rights | Counsel sign-off (tracker P02) |
 | P5 | Breach-response runbook covering the FTC Health Breach Notification Rule | Doc in `docs/` + named owner |
 | P6 | Secrets never in client builds; CI secret scanning; dependency audit gate | `security.yml`, `.githooks/pre-push` ✅ |
-| P7 | Branch protection on `main` requiring Security + app checks | GitHub settings (owner action) |
+| P7 | Branch protection on `main` requiring the single **CI passed** check (`ci.yml` runs security, mobile, web, backend and packages on every branch) | GitHub ruleset (owner action; steps in `docs/github-workflow.md`) |
 
 ## 4. Quality
 
