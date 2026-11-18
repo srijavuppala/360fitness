@@ -1,15 +1,13 @@
 name: Security
+# Runs as part of ci.yml on every push/PR, plus a weekly re-scan that catches
+# advisories published after code merged.
 on:
-  push:
-  pull_request:
+  workflow_call:
+  workflow_dispatch:
   schedule:
-    # Weekly re-scan catches advisories published after code merged.
     - cron: "23 6 * * 1"
 permissions:
   contents: read
-concurrency:
-  group: security-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   secrets:
@@ -62,7 +60,30 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
+      # dependency-review-action needs the repository's Dependency graph
+      # (Settings > Code security > Dependency graph). Until the owner enables
+      # it, say so loudly instead of failing with an opaque error; the npm
+      # audit gate above still blocks high/critical advisories. Once enabled,
+      # this check enforces automatically with no workflow change.
+      - name: Check Dependency graph is enabled
+        id: depgraph
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/dependency-graph/sbom")
+          if [ "$code" = "200" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Dependency review not running::Dependency graph is disabled for this repository (HTTP $code). Enable it: https://github.com/$REPO/settings/security_analysis . The npm audit gate still blocks high/critical advisories."
+            echo "### ⚠️ Dependency review not running" >> "$GITHUB_STEP_SUMMARY"
+            echo "Enable **Dependency graph** at https://github.com/$REPO/settings/security_analysis — then this check enforces automatically." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/dependency-review-action@v4
+        if: steps.depgraph.outputs.enabled == 'true'
         with:
           fail-on-severity: high
           deny-licenses: GPL-3.0, AGPL-3.0

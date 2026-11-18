@@ -1,0 +1,48 @@
+name: CI
+# One pipeline for the whole repository. Runs on every push to every branch,
+# on every pull request, and on demand. Branch protection only needs to
+# require the single "CI passed" check below.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+    name: Security
+    uses: ./.github/workflows/security.yml
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      pull-requests: write
+
+  mobile:
+    name: Mobile
+    uses: ./.github/workflows/mobile.yml
+
+  web-backend-packages:
+    name: Web, backend & packages
+    uses: ./.github/workflows/web.yml
+
+  ci-passed:
+    name: CI passed
+    if: always()
+    needs: [security, mobile, web-backend-packages]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Every stage succeeded
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS"
+          if echo "$RESULTS" | grep -Eq '"result": "(failure|cancelled)"'; then
+            echo "::error::One or more CI stages failed or were cancelled."
+            exit 1
+          fi

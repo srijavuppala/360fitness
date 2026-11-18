@@ -18,3 +18,30 @@ Both CI workflows run on all PRs, so path filters cannot leave a required check 
 Before production, pin action revisions to reviewed commit SHAs, enable secret scanning/dependency alerts available for the repository, address dependency vulnerabilities, and configure environment approvals for deployment workflows. Rename the default branch to `main` only as a coordinated repository operation; do not silently change the shared default.
 
 Reference: [GitHub Actions least-privilege token permissions](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token).
+
+## One CI pipeline for every branch (November 2026)
+
+`.github/workflows/ci.yml` is the single entry point. It runs on **every push to every branch**, on **every pull request**, and on demand (Actions → CI → Run workflow). It calls three building blocks:
+
+| Stage | File | What it checks |
+| --- | --- | --- |
+| Security | `security.yml` | gitleaks secret scan, npm audit gate (mobile/web/functions), dependency review on PRs, CodeQL (TypeScript + workflow files). Also runs weekly on its own |
+| Mobile | `mobile.yml` | Expo export for all platforms, typecheck, lint, tests, rules drift |
+| Web, backend & packages | `web.yml` | Website lint/tests/build, Cloud Functions tests, Firestore emulator rule tests, shared packages (`workout-core`, `glucose-core`, `health-mcp`) |
+| **CI passed** | `ci.yml` | Fails if any stage failed or was cancelled |
+
+```mermaid
+flowchart LR
+  B["Push to any branch<br/>feature/*, fix/*, claude/*"] --> CI
+  PR["Pull request into main"] --> CI
+  CI["CI"] --> S[Security] & M[Mobile] & W["Web, backend & packages"]
+  S & M & W --> G{"CI passed"}
+  G -- green --> Merge["Review → merge to main"]
+  G -- red --> Fix["Fix on the branch, push again"]
+```
+
+**Branch flow:** create `feature/<name>` (or `fix/`, `docs/`) from `main` → push. CI runs on the branch → open a PR. CI runs on the merge result → review → merge. A local `.githooks/pre-push` guard (`git config core.hooksPath .githooks`) blocks secrets before they leave your machine.
+
+**Make `main` require it (owner, once):** Settings → Rules → Rulesets → New branch ruleset → target `main` → enable *Require a pull request before merging* and *Require status checks to pass* → add **CI passed** → enable *Block force pushes*. Require only this one check; it already depends on every stage.
+
+**Dependency review prerequisite:** enable Settings → Code security → **Dependency graph**. Until then the dependency review job posts a warning instead of running, and the npm audit gate still blocks high/critical advisories.
