@@ -6,6 +6,8 @@
 
 **Release status — October 10, 2026:** this is a working development foundation. Some features work locally; cloud and AI features depend on the installed build's configuration. This document describes the checked-in implementation, not a claim that every service is deployed or that the app is available in stores.
 
+**Plan and requirements (Nov 2026):** [product plan, PRD & budget](docs/business/PRODUCT-PLAN.md) · [live app requirements](docs/release/LIVE-APP-REQUIREMENTS.md) · [data workflow](docs/data/DATA-WORKFLOW.md) · [V2.1 review](docs/release/V2.1-REVIEW.md) · [workout PRD](docs/workouts/WORKOUT-PRD.md) · [tracker CSV](docs/business/project-tracker-v2.csv)
+
 ## Contents
 
 - [For app users](#for-app-users)
@@ -264,6 +266,8 @@ apps/
   web/                          companion React website
 packages/
   workout-core/                 shared workout goal/tracking engine (app, MCP, messaging)
+  glucose-core/                 self-reported glucose log, ranges, summaries (no dosing)
+  health-mcp/                   MCP server + iMessage/SMS router over the shared cores
 functions/
   index.js                      exported cloud functions
   src/                          validation, providers and access policies

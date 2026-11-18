@@ -45,6 +45,8 @@ export type AppState = {
   profileDraft?: ProfileDraft;
   /** Optional, consented health context; absent for users who never answered. */
   health?: HealthProfile;
+  /** A saved health section that failed validation, preserved rather than deleted. */
+  healthUnreadable?: unknown;
   templates: Meal[];
   entries: Entry[];
   /** Workout goals and sessions (packages/workout-core). Optional so older saves load. */
@@ -202,6 +204,9 @@ export function parseSavedState(raw: string): AppState {
     try {
       validateHealthProfile(value.health);
     } catch {
+      // Keep the unreadable copy so the next save can't erase it; the app
+      // runs as "not assessed" and the copy stays recoverable/exportable.
+      value.healthUnreadable = value.health;
       delete value.health;
     }
   }

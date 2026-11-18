@@ -34,3 +34,12 @@ test("glucose tools are offered only when diabetes was selected", async () => {
   assert.equal(tracksGlucose({ conditions: ["Diabetes (Type 1 / Type 2)"] } as never), true);
   assert.equal(tracksGlucose({ conditions: ["Kidney-related condition"] } as never), false);
 });
+
+test("an unreadable health section is quarantined, not erased by the next save", () => {
+  const bad = { version: 1, consentGivenAt: "x", updatedAt: "y", conditions: ["Not a real condition"] };
+  const restored = parseSavedState(JSON.stringify({ ...initialState(), health: bad }));
+  assert.equal(restored.health, undefined, "app runs as not assessed");
+  assert.deepEqual(restored.healthUnreadable, bad, "original kept for recovery");
+  const resaved = parseSavedState(JSON.stringify(restored));
+  assert.deepEqual(resaved.healthUnreadable, bad, "survives another save/load cycle");
+});

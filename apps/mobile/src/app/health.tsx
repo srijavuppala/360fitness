@@ -147,7 +147,7 @@ function HealthSection() {
               secondary
               disabled={saving}
               onPress={() =>
-                void commit(({ health: _removed, ...rest }) => rest)
+                void commit(({ health: _removed, healthUnreadable: _unreadable, ...rest }) => rest)
               }
             >
               Remove my health information
