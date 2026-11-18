@@ -1,15 +1,32 @@
 import { StyleSheet, Text, View } from "react-native";
+import { NutritionGoalResult, shownValue } from "../domain/nutrition-goal";
 import { directionLabel, Targets } from "../domain/targets";
 import { colors as c } from "../theme";
 import { Copy } from "./ui";
 
-export function TargetSummary({ targets }: { targets: Targets }) {
-  const macros = [
-    ["Protein", targets.protein, "g", c.green],
-    ["Carbs", targets.carbs, "g", c.blue],
-    ["Fat", targets.fat, "g", c.orange],
-    ["Fiber", targets.fiber, "g", c.accent],
-  ] as const;
+/**
+ * `goal` is optional so existing callers keep working. When given, targets the
+ * health-aware layer withholds are shown as "Needs review" instead of a number.
+ */
+export function TargetSummary({
+  targets,
+  goal,
+}: {
+  targets: Targets;
+  goal?: NutritionGoalResult | null;
+}) {
+  const macros = (
+    [
+      ["Protein", "protein", targets.protein, c.green],
+      ["Carbs", "carbs", targets.carbs, c.blue],
+      ["Fat", "fat", targets.fat, c.orange],
+      ["Fiber", "fiber", targets.fiber, c.accent],
+    ] as const
+  ).map(([label, key, general, color]) => ({
+    label,
+    color,
+    value: goal ? shownValue(goal, key) : general,
+  }));
   return (
     <View
       accessibilityLabel={`Daily target ${targets.kcal} kilocalories. ${directionLabel(targets)}. Estimate, not medical advice.`}
@@ -27,15 +44,15 @@ export function TargetSummary({ targets }: { targets: Targets }) {
           : ""}
       </Copy>
       <View style={s.macros}>
-        {macros.map(([label, value, unit, color]) => (
+        {macros.map(({ label, value, color }) => (
           <View key={label} style={s.macro}>
             <View style={[s.dot, { backgroundColor: color }]} />
             <Text style={s.macroValue}>
-              {value}
-              <Text style={s.macroUnit}> {unit}</Text>
+              {value === null ? "—" : value}
+              {value === null ? null : <Text style={s.macroUnit}> g</Text>}
             </Text>
             <Copy muted style={s.macroLabel}>
-              {label}
+              {value === null ? `${label} · needs review` : label}
             </Copy>
           </View>
         ))}

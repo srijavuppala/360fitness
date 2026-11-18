@@ -1,0 +1,24 @@
+Scenario,Item,Low cost,High cost,Currency,Basis
+One-time (6 months),Apple Developer Program,99,99,USD,Annual membership; confirm current price
+One-time (6 months),Google Play developer registration,25,25,USD,One-time fee; confirm current price
+One-time (6 months),Domain name,16,36,USD,1 year; depends on TLD
+One-time (6 months),Claude Code subscription for development,120,1200,USD,6 months x 20 (Pro) to 200 (Max) per month
+One-time (6 months),Hosting database auth and MCP endpoint,0,300,USD,Firebase / Workers free tiers then pay-as-you-go; planning allowance
+One-time (6 months),Clinical advisor (CDCES or RD),750,3000,USD,10-20 hours x 75-150 USD/hour; safety copy education report review
+One-time (6 months),Privacy policy terms and claims legal review,1500,5000,USD,Health-app attorney flat fee or hourly; quote required
+One-time (6 months),User research incentives,250,800,USD,10-20 testers x 25-40 USD
+One-time (6 months),Design polish (icon store screenshots),0,600,USD,Optional
+One-time (6 months),Subtotal,2760,11060,USD,Sum of nine lines
+One-time (6 months),Contingency,552,2212,USD,20 percent of subtotal
+One-time (6 months),Total cash,3312,13272,USD,Subtotal plus contingency; founder time excluded
+Monthly ~500 active users,Firebase (Firestore Auth Functions Hosting),0,25,USD,Free tier then usage; planning allowance
+Monthly ~500 active users,Remote MCP endpoint,0,5,USD,Worker or Cloud Function free tier / entry paid plan
+Monthly ~500 active users,Error monitoring,0,26,USD,Free tier then entry plan
+Monthly ~500 active users,Expo EAS builds,0,0,USD,Free tier during beta; paid plan if build queue limits bite
+Monthly ~500 active users,Chat model (MCP route),0,0,USD,Person's own assistant runs the model
+Monthly ~500 active users,Food data (USDA FDC Open Food Facts),0,0,USD,Free open data; USDA needs a free API key
+Monthly ~500 active users,Technology subtotal,0,56,USD,Sum of six lines
+Monthly optional,In-app photo estimates,0,50,USD,~0.002 USD per scan with a hard monthly cap; disable switch
+Monthly optional,iMessage / SMS check-ins,30,300,USD,Provider and volume dependent; quote required; SMS needs 10DLC registration
+Compare,Uploaded clinic plan build allowance,83520,221880,USD,From Nourish US Live App PRD v0.3 (for reference)
+Compare,Uploaded clinic plan monthly at 50 patients,5456.33,13314.67,USD,Includes clinician review time and maintenance

@@ -1,0 +1,20 @@
+{
+  "name": "@360fitness/workout-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dependency-free workout goal and tracking engine shared by the app, an MCP server and messaging (iMessage/SMS) adapters.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "360fitness-workouts-mcp": "./bin/mcp-server.ts"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.ts",
+    "mcp": "node bin/mcp-server.ts"
+  }
+}

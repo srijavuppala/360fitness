@@ -6,6 +6,8 @@
 
 **Release status — October 10, 2026:** this is a working development foundation. Some features work locally; cloud and AI features depend on the installed build's configuration. This document describes the checked-in implementation, not a claim that every service is deployed or that the app is available in stores.
 
+**Plan and requirements (Nov 2026):** [product plan, PRD & budget](docs/business/PRODUCT-PLAN.md) · [live app requirements](docs/release/LIVE-APP-REQUIREMENTS.md) · [data workflow](docs/data/DATA-WORKFLOW.md) · [V2.1 review](docs/release/V2.1-REVIEW.md) · [workout PRD](docs/workouts/WORKOUT-PRD.md) · [tracker CSV](docs/business/project-tracker-v2.csv)
+
 ## Contents
 
 - [For app users](#for-app-users)
@@ -126,7 +128,7 @@ flowchart TB
   Review --> Domain
 ```
 
-The companion website has its own React components and state implementation. It is not the phone app's server, and its browser data is not automatically shared with the native app. Historical Flutter code is retained for reference and is not part of the React Native runtime.
+The companion website has its own React components and state implementation. It is not the phone app's server, and its browser data is not automatically shared with the native app. The earlier Flutter code (root `lib/`, `web/` and `legacy/web-prototype`) was removed in November 2026; it remains in git history before commit `5823a0d` for reference only. The product is React Native + React only.
 
 ## How information moves
 
@@ -164,6 +166,7 @@ The app sends a product barcode to Open Food Facts and shows available nutrition
 | Usual meals and dated meal entries | Same local record | Survive restart after saving; no automatic cloud diary backup |
 | Meal prep plan | Local state; optional `mobileMealPrep/{uid}` copy | Review/save/restore with conflict checks |
 | Cloud profile | `mobileProfiles/{uid}` | Verified-owner access and schema validation |
+| Health information (optional) | Local `AppState.health`; optional `mobileHealthProfiles/{uid}` backup | Local by default; backup is a separate user action. See [health-aware goals](docs/health-aware-nutrition-goals.md) |
 | Callable AI usage counters | `analysisUsage/{uid}` | Backend-owned limits; not client-editable |
 | Login session | Firebase Auth persistence | Separate from meal/profile storage; app code does not store your password |
 | Unsaved meal editor | Screen state | Do not assume unsaved edits/imported estimates survive restart |
@@ -261,6 +264,10 @@ apps/
     app.config.ts + app.json    native configuration and permissions
     eas.json                    development / preview / production profiles
   web/                          companion React website
+packages/
+  workout-core/                 shared workout goal/tracking engine (app, MCP, messaging)
+  glucose-core/                 self-reported glucose log, ranges, summaries (no dosing)
+  health-mcp/                   MCP server + iMessage/SMS router over the shared cores
 functions/
   index.js                      exported cloud functions
   src/                          validation, providers and access policies
@@ -269,7 +276,6 @@ scripts/profile-rules.ts        generates/checks mobile profile rules
 firestore.rules                 database authorization boundary
 .github/workflows/              mobile, website and backend validation
 docs/                          architecture, setup, research and backlog
-lib/ + test/ + legacy/          historical Flutter/prototype code
 ```
 
 ## Run the project
@@ -340,6 +346,7 @@ Use a focused `feature/<change>` (new work or refactors), `fix/<change>` (bug fi
 - [Mobile developer README](apps/mobile/README.md)
 - [Mobile architecture and cloud lifecycle](docs/mobile-architecture.md)
 - [Expo collaborators, testers and app users](docs/expo-and-app-users.md)
+- [Health-aware onboarding and nutrition goals](docs/health-aware-nutrition-goals.md)
 - [Meal prep](docs/meal-prep.md) and [voice onboarding](docs/voice-onboarding.md)
 - [Product scanner](docs/product-scanner-research.md)
 - [Product discovery](docs/product-blueprint/PRODUCT-DISCOVERY.md)

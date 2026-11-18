@@ -145,6 +145,7 @@ describe('anything outside a user document', () => {
   const strayPaths = [
     'config/global',
     'analysisUsage/alice-uid',
+    'searchUsage/alice-uid',
     'experts/some-expert',
     'bookings/some-booking',
     'users',
@@ -281,5 +282,84 @@ describe('mobile meal prep backups', () => {
   it('rejects oversized payloads, unsupported schemas, unknown fields and forged timestamps',async()=>{
     const ref=doc(verified(),'mobileMealPrep',ALICE);
     for (const change of [{payload:'x'.repeat(180001)},{payload:{}},{schemaVersion:2},{extra:true},{updatedAt:new Date(0)},{generation:'bad'},{revision:2}]) await assertFails(setDoc(ref,{...record(),...change}));
+  });
+});
+
+describe('mobile health information backups', () => {
+  const NOW = '2026-11-17T10:00:00.000Z';
+  const health = (extra = {}) => ({ version: 1, consentGivenAt: NOW, updatedAt: NOW, ...extra });
+  const record = (h = health(), revision = 1) => ({
+    schemaVersion: 1, revision, generation: 'a'.repeat(20), backupConsent: true,
+    health: h, updatedAt: serverTimestamp(),
+  });
+  const path = `mobileHealthProfiles/${ALICE}`;
+
+  it('lets a verified owner create, read, advance and delete', async () => {
+    const ref = doc(verified(), path);
+    await assertSucceeds(setDoc(ref, record(health({ conditions: ['Kidney-related condition'] }))));
+    await assertSucceeds(getDoc(ref));
+    await assertSucceeds(setDoc(ref, record(health({ conditions: ['None of the above'] }), 2)));
+    await assertSucceeds(deleteDoc(ref));
+  });
+
+  it('denies other users, anonymous visitors and unverified owners', async () => {
+    await assertSucceeds(setDoc(doc(verified(), path), record()));
+    for (const client of [anonymous, alice, bob, verified(BOB)]) {
+      await assertFails(getDoc(doc(client, path)));
+      await assertFails(setDoc(doc(client, path), record(health(), 2)));
+      await assertFails(deleteDoc(doc(client, path)));
+    }
+  });
+
+  it('is not readable through the unvalidated users wildcard', async () => {
+    await assertSucceeds(setDoc(doc(verified(), path), record()));
+    await assertFails(getDoc(doc(bob, `users/${ALICE}/healthProfile/main`)));
+  });
+
+  it('rejects unknown fields, bad choices, broken exclusivity and missing consent', async () => {
+    const ref = doc(verified(), path);
+    const bad = [
+      health({ extra: true }),
+      health({ conditions: ['Invented condition'] }),
+      health({ conditions: [] }),
+      health({ conditions: ['Heart-related condition', 'Heart-related condition'] }),
+      health({ conditions: ['None of the above', 'Heart-related condition'] }),
+      health({ conditions: ['Prefer not to disclose', 'Heart-related condition'] }),
+      health({ conditionOther: 'text without Other selected' }),
+      health({ conditions: ['Other health condition'], conditionOther: 'x'.repeat(101) }),
+      health({ dietaryRestrictions: 'Maybe' }),
+      health({ dietaryRestrictions: 'No', dietaryRestrictionsNote: 'note without Yes' }),
+      health({ dietaryRestrictions: 'Yes', dietaryRestrictionsNote: 'x'.repeat(201) }),
+      health({ conditions: ['Heart-related condition'], clinicianProtein: { grams: 50, enteredAt: NOW } }),
+      health({ conditions: ['Kidney-related condition'], clinicianProtein: { grams: 0, enteredAt: NOW } }),
+      health({ conditions: ['Kidney-related condition'], clinicianProtein: { grams: 501, enteredAt: NOW } }),
+      health({ conditions: ['Kidney-related condition'], clinicianProtein: { grams: 50.5, enteredAt: NOW } }),
+      health({ conditions: ['Kidney-related condition'], clinicianProtein: { grams: 50, enteredAt: NOW, extra: 1 } }),
+    ];
+    for (const h of bad) await assertFails(setDoc(ref, record(h)));
+    await assertFails(setDoc(ref, { ...record(), backupConsent: false }));
+    const { backupConsent, ...noConsent } = record();
+    await assertFails(setDoc(ref, noConsent));
+    await assertFails(setDoc(ref, { ...record(), extra: true }));
+    await assertFails(setDoc(ref, { ...record(), updatedAt: new Date(0) }));
+  });
+
+  it('accepts every documented optional field together', async () => {
+    await assertSucceeds(setDoc(doc(verified(), path), record(health({
+      conditions: ['Kidney-related condition', 'Other health condition'],
+      conditionOther: 'Gout',
+      dietaryRestrictions: 'Yes', dietaryRestrictionsNote: 'Low salt',
+      professionalGuidance: 'Yes', professionalGuidanceNote: 'Per dietitian',
+      clinicianProtein: { grams: 52, enteredAt: NOW },
+    }))));
+  });
+
+  it('enforces revision progression and an immutable generation', async () => {
+    const ref = doc(verified(), path);
+    await assertFails(setDoc(ref, record(health(), 4)));
+    await assertSucceeds(setDoc(ref, record()));
+    await assertFails(setDoc(ref, record()));
+    await assertFails(setDoc(ref, record(health(), 3)));
+    await assertFails(setDoc(ref, { ...record(health(), 2), generation: 'b'.repeat(20) }));
   });
 });

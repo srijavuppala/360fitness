@@ -368,7 +368,8 @@ export function Nutrition({
   target,
 }: {
   total: Nutrients;
-  target?: { protein: number; carbs: number; fat: number };
+  /** A null target is intentionally withheld (see health-aware goals). */
+  target?: { protein: number | null; carbs: number | null; fat: number | null };
 }) {
   return (
     <View style={styles.macros}>
@@ -383,8 +384,10 @@ export function Nutrition({
           <View style={[styles.dot, { backgroundColor: color }]} />
           <Text style={styles.macroValue}>
             {formatValue(total[key])}
-            {target ? (
+            {target && target[key] !== null ? (
               <Text style={styles.unit}> / {target[key]} g</Text>
+            ) : target ? (
+              <Text style={styles.unit}> g · needs review</Text>
             ) : (
               <Text style={styles.unit}> g</Text>
             )}

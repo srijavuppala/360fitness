@@ -1,10 +1,9 @@
 name: Website and Firebase
-on: [push, pull_request]
+# Called by ci.yml (one pipeline for every branch and PR); not triggered directly.
+on:
+  workflow_call:
 permissions:
   contents: read
-concurrency:
-  group: web-backend-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
   website:
     runs-on: ubuntu-latest
@@ -45,3 +44,19 @@ jobs:
         working-directory: apps/mobile
       - run: npm run test:profiles
         working-directory: functions
+  packages:
+    name: Shared packages (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [workout-core, glucose-core, health-mcp]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Dependency-free packages: Node runs the TypeScript directly, no install.
+      - run: npm test
+        working-directory: packages/${{ matrix.package }}
