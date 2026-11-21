@@ -10,7 +10,8 @@ import {
 import { useApp } from "../../data/store";
 import { initialState } from "../../domain/fixtures";
 import { answerLabel, goalLabels } from "../../domain/profile";
-import { calculateTargets, directionLabel } from "../../domain/targets";
+import { buildNutritionGoal } from "../../domain/nutrition-goal";
+import { directionLabel } from "../../domain/targets";
 import { calorieTrackerNotice } from "../../domain/thirdPartyNotices";
 import { colors as c } from "../../theme";
 
@@ -25,9 +26,10 @@ export default function Profile() {
     | null
   >(null);
   const [message, setMessage] = useState("");
-  const targets = state.profile
-    ? calculateTargets(state.profile.answers)
+  const goal = state.profile
+    ? buildNutritionGoal(state.profile.answers, state.health)
     : null;
+  const targets = goal?.generalTarget ?? null;
   return (
     <MobileFrame
       bottomInset={false}
@@ -113,6 +115,16 @@ export default function Profile() {
       </View>
       <View style={{ gap: 6 }}>
         <SettingsRow
+          title="Health & medical information"
+          detail={
+            state.health
+              ? "Optional · Saved on this device · Edit or remove"
+              : "Optional · Helps us tell if your estimate may not suit you"
+          }
+          icon="heart-outline"
+          onPress={() => router.push("/health")}
+        />
+        <SettingsRow
           title="Account & backup"
           detail="Sign in · save or restore your profile"
           icon="cloud-outline"
@@ -153,7 +165,8 @@ export default function Profile() {
         {sheet === "Data & privacy" ? (
           <>
             <Copy>
-              Meals and profile drafts stay on this device. In Account & backup,
+              Meals, profile drafts and any health information you add stay on
+              this device and are never sent to analytics. In Account & backup,
               you can choose to save or restore a profile using your account.
               Meal prep has its own optional cloud backup in My Plan.
             </Copy>

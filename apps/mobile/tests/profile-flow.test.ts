@@ -18,7 +18,7 @@ test("legacy group drafts resume at their group, not a reinterpreted question nu
     "review",
   );
   assert.equal(resumeProfile(undefined, true), "review");
-  assert.equal(resumeProfile(undefined, false), "age");
+  assert.equal(resumeProfile(undefined, false), "ageYears");
 });
 test("new drafts round-trip the exact question and reject a mismatched group", () => {
   const draft = draftAt({ diet: "Vegan" }, "diet");
@@ -55,13 +55,12 @@ test("conditional pages appear and disappear with the parent answer", () => {
   );
 });
 test("review finds the first visible missing answer", () => {
-  assert.equal(
-    firstProfileIssue({ age: "25–34" }, 0)?.cursor,
-    "sex",
-  );
+  assert.equal(firstProfileIssue({ age: "25–34" }, 0)?.cursor, "ageYears");
+  assert.ok(!profilePages({ ageYears: "30" }).some((p) => p.question.key === "age"));
   assert.equal(
     firstProfileIssue(
       {
+        ageYears: "30",
         age: "25–34",
         sex: "Female",
         heightCm: "165",

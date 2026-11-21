@@ -58,6 +58,7 @@ export const options = {
 type OptionKey = keyof typeof options;
 export type AnswerKey =
   | OptionKey
+  | "ageYears"
   | "heightCm"
   | "currentWeightKg"
   | "targetWeightKg"
@@ -86,6 +87,10 @@ export type Question = {
   maxLength?: number;
   hint?: string;
   when?: { key: OptionKey; value: string };
+  /** Only a fallback: hidden once the named exact answer has been given. */
+  hideWhenAnswered?: AnswerKey;
+  /** Whole numbers only (for example age in completed years). */
+  integer?: boolean;
   /** Inclusive bounds for number questions. */
   min?: number;
   max?: number;
@@ -101,13 +106,30 @@ export const profileSteps: {
     subtitle:
       "A baseline in your own terms. You can keep personal details private.",
     questions: [
-      { key: "age", label: "Your age range", kind: "single", required: true },
       {
-        key: "sex",
-        label: "Gender",
+        key: "ageYears",
+        label: "Your age",
+        kind: "number",
+        required: true,
+        min: 19,
+        max: 120,
+        unit: "years",
+        integer: true,
+        hint: "Completed years, the same kind of entry as your weight. Daily calories and nutrients use this exact age.",
+      },
+      {
+        // Stored for existing profiles and cloud rules. Not shown: exact age is the input.
+        key: "age",
+        label: "Your age range",
         kind: "single",
         required: true,
-        hint: "Used only in the standard formula for resting energy use. Prefer not to say uses an average of the two.",
+      },
+      {
+        key: "sex",
+        label: "Calorie equation",
+        kind: "single",
+        required: true,
+        hint: "The 2023 Dietary Reference Intakes give separate energy equations for Female and Male. Choose the one that best matches your body. If you prefer not to say, we show a range instead of a single number.",
       },
       {
         key: "heightCm",
@@ -174,7 +196,7 @@ export const profileSteps: {
         label: "Typical activity level",
         kind: "single",
         required: true,
-        hint: "Used to estimate how many calories you use in a typical day.",
+        hint: "Your total activity across a typical day: mostly sitting (inactive), lightly active (low active), moderately active (active), very active. Choose “varies” if it changes a lot and we will use the low-active group and ask you to check your weight trend. This is an estimate.",
       },
     ],
   },
@@ -240,14 +262,42 @@ export function weightChangeKg(answers: ProfileAnswers): number | null {
   return current === null || target === null ? null : target - current;
 }
 
+function validAge(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^\d{1,3}$/.test(value.trim()) &&
+    Number(value) >= 5 &&
+    Number(value) <= 120
+  );
+}
+/** The legacy age range that contains an exact age, kept in step for older readers. */
+export function ageBandFor(years: number): (typeof options.age)[number] {
+  return years < 18
+    ? "Under 18"
+    : years <= 24
+      ? "18–24"
+      : years <= 34
+        ? "25–34"
+        : years <= 44
+          ? "35–44"
+          : years <= 54
+            ? "45–54"
+            : years <= 64
+              ? "55–64"
+              : "65+";
+}
+
 export function visibleQuestion(
   question: Question,
   answers: ProfileAnswers,
 ): boolean {
+  if (question.key === "age") return false;
   if (question.key === "weeklyPace") {
     const change = weightChangeKg(answers);
     return change !== null && Math.abs(change) > MAINTAIN_TOLERANCE_KG;
   }
+  if (question.hideWhenAnswered && validAge(answers[question.hideWhenAnswered]))
+    return false;
   if (!question.when) return true;
   const value = answers[question.when.key];
   return Array.isArray(value)
@@ -272,6 +322,9 @@ export function changeAnswer(
   // Remove answers to hidden questions so private/stale details are not retained.
   for (const question of allQuestions)
     if (!visibleQuestion(question, next)) delete next[question.key];
+  // The age range always follows an exact age, so older readers and cloud
+  // rules keep seeing a valid range.
+  if (validAge(next.ageYears)) next.age = ageBandFor(Number(next.ageYears));
   return next;
 }
 
@@ -344,13 +397,13 @@ export function stepErrors(
       const min = q.min ?? 0;
       const max = q.max ?? 100000;
       if (
-        !/^\d+(\.\d{1,2})?$/.test(text) ||
+        !(q.integer ? /^\d+$/ : /^\d+(\.\d{1,2})?$/).test(text) ||
         !Number.isFinite(amount) ||
         amount < min ||
         amount > max
       )
         errors[q.key] = q.unit
-          ? `Enter ${q.label.toLowerCase()} from ${min} to ${max} ${q.unit}, with at most two decimal places.`
+          ? `Enter ${q.label.toLowerCase()} from ${min} to ${max} ${q.unit}, ${q.integer ? "as a whole number" : "with at most two decimal places"}.`
           : `Enter zero or a positive amount, up to ${max.toLocaleString("en-US")}, with at most two decimal places.`;
     }
     if (q.kind === "time" && normalizeCheckInTime(String(value)) === null)
@@ -559,6 +612,8 @@ export function saveProfile(
     else if (typeof answer === "string" && answer.trim())
       cleaned[q.key] = answer.trim();
   }
+  if (validAge(cleaned.ageYears))
+    cleaned.age = ageBandFor(Number(cleaned.ageYears));
   const profile: PersonalProfile = {
     version: 2,
     answers: cleaned,

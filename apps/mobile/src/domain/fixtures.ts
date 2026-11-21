@@ -54,6 +54,7 @@ export const sampleMeals: Meal[] = [
 
 /** Complete V1 onboarding answers used by tests and cloud fixtures. */
 export const completeProfileAnswers: ProfileAnswers = {
+  ageYears: "30",
   age: "25–34",
   sex: "Female",
   heightCm: "165",

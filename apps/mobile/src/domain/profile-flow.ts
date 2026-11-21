@@ -24,13 +24,13 @@ export function resumeProfile(
   draft: ProfileDraft | undefined,
   hasProfile: boolean,
 ): ProfileCursor {
-  if (!draft) return hasProfile ? "review" : "age";
+  if (!draft) return hasProfile ? "review" : "ageYears";
   if (draft.step === profileSteps.length) return "review";
   const pages = profilePages(draft.answers);
   return (
     pages.find((p) => p.question.key === draft.question)?.question.key ??
     pages.find((p) => p.step === draft.step)?.question.key ??
-    "age"
+    "ageYears"
   );
 }
 export function draftAt(
