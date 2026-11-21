@@ -11,6 +11,7 @@ import {
   saveProfile,
   stepErrors,
   toggleSelection,
+  visibleQuestion,
   validateAnswerShape,
   validateProfileDraft,
   migrateProfileAnswers,
@@ -54,7 +55,7 @@ test("all required questions are enforced and optional questions can be skipped"
   for (let index = 0; index < profileSteps.length; index++) {
     assert.deepEqual(stepErrors(complete, index), {});
     for (const question of profileSteps[index].questions.filter(
-      (q) => q.required && !q.when,
+      (q) => q.required && !q.when && visibleQuestion(q, complete),
     )) {
       const incomplete = { ...complete };
       delete incomplete[question.key];
@@ -64,6 +65,17 @@ test("all required questions are enforced and optional questions can be skipped"
       );
     }
   }
+});
+test("an exact age replaces the age band and the band is derived from it", () => {
+  const { age: _band, ...exact } = complete;
+  const saved = saveProfile(initialState(), { ...exact, ageYears: "40" });
+  assert.equal(saved.profile?.answers.age, "35–44");
+  assert.throws(() => saveProfile(initialState(), { ...exact, ageYears: "4.5" }));
+  assert.throws(() => saveProfile(initialState(), { ...exact, ageYears: "abc" }));
+  assert.throws(() => saveProfile(initialState(), { ...exact, ageYears: "18" }));
+  // Exact age is required. A stored age band alone cannot produce a target.
+  const { ageYears: _years, ...legacy } = complete;
+  assert.throws(() => saveProfile(initialState(), legacy));
 });
 test("drafts resume incomplete input without replacing a completed profile", () => {
   const saved = saveProfile(initialState(), complete);
@@ -206,7 +218,7 @@ test("incomplete v1 profiles reopen as a draft instead of failing to load", () =
   );
   assert.equal(migrated.profile, undefined);
   assert.equal(migrated.profileDraft?.answers.currentWeightKg, "72.5");
-  assert.equal(migrated.profileDraft?.question, "sex");
+  assert.equal(migrated.profileDraft?.question, "ageYears");
 });
 test("12-hour times still convert noon and midnight", () => {
   for (const [input, stored, display] of [

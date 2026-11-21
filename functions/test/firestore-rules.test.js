@@ -197,7 +197,7 @@ describe('the rules file', () => {
 });
 
 const mobileAnswers = {
-  age: '25–34', sex: 'Female', heightCm: '165', currentWeightKg: '72.5',
+  ageYears: '30', age: '25–34', sex: 'Female', heightCm: '165', currentWeightKg: '72.5',
   primaryGoal: 'Build consistent habits', targetWeightKg: '68',
   weeklyPace: 'Steady · 0.5 kg a week', outcome: 'Cook at home',
   activity: 'Moderately active', diet: 'No specific diet', allergies: ['None known'],
@@ -232,7 +232,8 @@ describe('mobile onboarding profiles', () => {
       { ...mobileAnswers, allergies: ['Milk', 'None known'] },
       { ...mobileAnswers, heightCm: '90' }, { ...mobileAnswers, currentWeightKg: '24' },
       { ...mobileAnswers, targetWeightKg: '400' },
-      { ...mobileAnswers, diet: 'Other' }]) {
+      { ...mobileAnswers, diet: 'Other' }, { ...mobileAnswers, ageYears: '30.5' },
+      { ...mobileAnswers, ageYears: '4' }]) {
       await assertFails(setDoc(ref, mobileRecord(answers)));
     }
     await assertFails(setDoc(ref, { ...mobileRecord(), extra: true }));

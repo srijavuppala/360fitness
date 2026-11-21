@@ -386,8 +386,6 @@ export function Nutrition({
             {formatValue(total[key])}
             {target && target[key] !== null ? (
               <Text style={styles.unit}> / {target[key]} g</Text>
-            ) : target ? (
-              <Text style={styles.unit}> g · needs review</Text>
             ) : (
               <Text style={styles.unit}> g</Text>
             )}

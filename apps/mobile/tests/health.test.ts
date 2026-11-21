@@ -114,11 +114,17 @@ test("a clinician protein value is whole grams and only kept for kidney", () => 
     ...empty(),
     conditions: ["Kidney-related condition"],
     clinicianProtein: "55",
+    clinicianSource: "Dr Rao",
   };
+  // A clinician value must say who gave it.
+  assert.throws(() =>
+    healthFromDraft({ ...draft, clinicianSource: "" }, undefined, NOW),
+  );
   const kept = healthFromDraft(draft, undefined, NOW);
   assert.deepEqual(kept.clinicianProtein, {
     grams: 55,
     enteredAt: NOW.toISOString(),
+    source: "Dr Rao",
   });
   // Same value on re-save keeps the original entry time.
   const again = healthFromDraft(draft, kept, new Date("2027-01-01"));

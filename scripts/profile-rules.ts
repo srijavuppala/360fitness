@@ -15,7 +15,7 @@ const checks = questions.map(q => {
     : `${ref} in ${quote(choices)}`
     : `(${ref} is string && ${ref}.size() > 0 && ${ref}.size() <= ${q.maxLength ?? 300})`;
   if (q.kind === 'time') check = `(${ref} is string && ${ref}.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'))`;
-  if (q.kind === 'number') check = `(${ref} is string && ${ref}.size() <= 300 && ${ref}.matches('^[0-9]+(\\\\.[0-9]{1,2})?$') && float(${ref}) >= ${q.min ?? 0} && float(${ref}) <= ${q.max ?? 100000})`;
+  if (q.kind === 'number') check = `(${ref} is string && ${ref}.size() <= 300 && ${ref}.matches('${q.integer ? '^[0-9]+$' : '^[0-9]+(\\\\.[0-9]{1,2})?$'}') && float(${ref}) >= ${q.min ?? 0} && float(${ref}) <= ${q.max ?? 100000})`;
   if (q.key === 'weeklyPace') return `((math.abs(float(a.targetWeightKg) - float(a.currentWeightKg)) > ${MAINTAIN_TOLERANCE_KG}) ? ${check} : !('weeklyPace' in a))`;
   if (q.when) {
     const condition = q.when.key === 'allergies' ? `${quote(q.when.value)} in a.allergies` : `a.${q.when.key} == ${quote(q.when.value)}`;

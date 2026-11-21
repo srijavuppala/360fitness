@@ -12,7 +12,6 @@ import { initialState } from "../../domain/fixtures";
 import { answerLabel, goalLabels } from "../../domain/profile";
 import { buildNutritionGoal } from "../../domain/nutrition-goal";
 import { directionLabel } from "../../domain/targets";
-import { HealthGoalCard } from "../../components/HealthGoalCard";
 import { calorieTrackerNotice } from "../../domain/thirdPartyNotices";
 import { colors as c } from "../../theme";
 
@@ -114,7 +113,6 @@ export default function Profile() {
               : "Set up my profile"}
         </Button>
       </View>
-      {goal ? <HealthGoalCard goal={goal} /> : null}
       <View style={{ gap: 6 }}>
         <SettingsRow
           title="Health & medical information"

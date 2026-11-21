@@ -250,6 +250,12 @@ function Questionnaire() {
             </Copy>
           </View>
           {targets ? <TargetSummary targets={targets} goal={goal} /> : null}
+          <Button
+            icon="heart-outline"
+            onPress={() => router.push("/health")}
+          >
+            Health & medical information
+          </Button>
           <View style={[s.grid, { gap: 8 }]}>
             {profileSteps.map((group, step) => (
               <Pressable
@@ -447,7 +453,9 @@ function QuestionField({
       onChangeText={(text) => onChange(q.key, text)}
       editable={!disabled}
       maxLength={q.kind === "time" ? 8 : 12}
-      keyboardType={q.kind === "number" ? "decimal-pad" : "default"}
+      keyboardType={
+        q.kind === "number" ? (q.integer ? "number-pad" : "decimal-pad") : "default"
+      }
       autoCapitalize={q.kind === "time" ? "characters" : "none"}
       autoCorrect={false}
       onBlur={

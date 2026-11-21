@@ -8,29 +8,21 @@ import {
   View,
 } from "react-native";
 import { Redirect, router } from "expo-router";
-import { Button, Copy, Icon, Notice } from "../components/ui";
+import { Button, Copy, Icon } from "../components/ui";
 import { MobileFrame } from "../components/MobileFrame";
 import { useApp } from "../data/store";
 import {
-  answerOptions,
   Condition,
   conditionOptions,
   draftFromHealth,
-  HealthAnswer,
   HealthDraft,
   healthFromDraft,
-  KIDNEY,
-  NOTE_MAX_LENGTH,
+  HealthInputError,
   OTHER_CONDITION,
   OTHER_MAX_LENGTH,
   toggleCondition,
 } from "../domain/health";
-import {
-  CONSENT_NOTICE,
-  DISCLAIMER,
-  HEALTH_INTRO,
-  KIDNEY_DISCLAIMER,
-} from "../domain/health-copy";
+import { HEALTH_NOTICE } from "../domain/health-copy";
 import { colors as c } from "../theme";
 
 export default function Health() {
@@ -41,7 +33,6 @@ export default function Health() {
 function HealthSection() {
   const { state, update, saving } = useApp();
   const existing = state.health;
-  const [started, setStarted] = useState(!!existing);
   const [draft, setDraft] = useState<HealthDraft>(() =>
     draftFromHealth(existing),
   );
@@ -49,7 +40,9 @@ function HealthSection() {
   const working = useRef(false);
   const onboarding = state.onboarding !== "complete";
   const leave = () =>
-    router.replace(onboarding ? "/welcome" : "/(tabs)/profile");
+    router.canGoBack()
+      ? router.back()
+      : router.replace(onboarding ? "/welcome" : "/(tabs)/profile");
 
   async function commit(change: Parameters<typeof update>[0]) {
     if (working.current) return;
@@ -62,7 +55,7 @@ function HealthSection() {
     } catch (cause) {
       // Never echo stored answers; only show known validation messages.
       setError(
-        cause instanceof Error && /grams/.test(cause.message)
+        cause instanceof HealthInputError
           ? cause.message
           : "Couldn’t save on this device. Your answers are still here. Try again.",
       );
@@ -91,35 +84,6 @@ function HealthSection() {
     </View>
   );
 
-  if (!started)
-    return (
-      <MobileFrame
-        header={header}
-        footer={
-          <>
-            <Button icon="arrow-forward" onPress={() => setStarted(true)}>
-              Continue
-            </Button>
-            <Button secondary disabled={saving} onPress={leave}>
-              Skip for now
-            </Button>
-          </>
-        }
-      >
-        <View style={s.heading}>
-          <Text accessibilityRole="header" style={s.title}>
-            Health & Medical Information
-          </Text>
-          <Copy muted>{HEALTH_INTRO}</Copy>
-        </View>
-        <Notice>{CONSENT_NOTICE}</Notice>
-        <Copy muted style={s.fine}>
-          {DISCLAIMER}
-        </Copy>
-      </MobileFrame>
-    );
-
-  const kidney = draft.conditions.includes(KIDNEY);
   return (
     <MobileFrame
       header={header}
@@ -198,92 +162,10 @@ function HealthSection() {
           onChange={(conditionOther) => set({ conditionOther })}
         />
       ) : null}
-      {kidney ? (
-        <>
-          <Notice>{KIDNEY_DISCLAIMER}</Notice>
-          <NoteField
-            label="Optional: daily protein target (g) given by your nephrologist or dietitian"
-            value={draft.clinicianProtein}
-            max={3}
-            numeric
-            disabled={saving}
-            onChange={(clinicianProtein) => set({ clinicianProtein })}
-          />
-          <Copy muted style={s.fine}>
-            360Fitness will show this as your care team’s value. It does not
-            check or endorse it.
-          </Copy>
-        </>
-      ) : null}
-
-      <AnswerQuestion
-        label="Do you follow any dietary restrictions because of a health condition or professional recommendation?"
-        value={draft.dietaryRestrictions}
-        note={draft.dietaryRestrictionsNote}
-        noteLabel="Optional: tell us more"
-        disabled={saving}
-        onAnswer={(dietaryRestrictions) => set({ dietaryRestrictions })}
-        onNote={(dietaryRestrictionsNote) => set({ dietaryRestrictionsNote })}
-      />
-      <AnswerQuestion
-        label="Have you been advised by a healthcare professional to follow any specific dietary or nutritional restrictions?"
-        value={draft.professionalGuidance}
-        note={draft.professionalGuidanceNote}
-        noteLabel="Optional: describe the restrictions"
-        disabled={saving}
-        onAnswer={(professionalGuidance) => set({ professionalGuidance })}
-        onNote={(professionalGuidanceNote) => set({ professionalGuidanceNote })}
-      />
       <Copy muted style={s.fine}>
-        {DISCLAIMER}
+        {HEALTH_NOTICE}
       </Copy>
     </MobileFrame>
-  );
-}
-
-function AnswerQuestion({
-  label,
-  value,
-  note,
-  noteLabel,
-  disabled,
-  onAnswer,
-  onNote,
-}: {
-  label: string;
-  value?: HealthAnswer;
-  note: string;
-  noteLabel: string;
-  disabled: boolean;
-  onAnswer(value: HealthAnswer | undefined): void;
-  onNote(value: string): void;
-}) {
-  return (
-    <View style={{ gap: 12 }}>
-      <Text accessibilityRole="header" style={s.question}>
-        {label}
-      </Text>
-      <View style={s.choices}>
-        {answerOptions.map((option) => (
-          <Choice
-            key={option}
-            label={option}
-            selected={value === option}
-            disabled={disabled}
-            onPress={() => onAnswer(value === option ? undefined : option)}
-          />
-        ))}
-      </View>
-      {value === "Yes" ? (
-        <NoteField
-          label={noteLabel}
-          value={note}
-          max={NOTE_MAX_LENGTH}
-          disabled={disabled}
-          onChange={onNote}
-        />
-      ) : null}
-    </View>
   );
 }
 
@@ -410,7 +292,13 @@ const s = StyleSheet.create({
     gap: 8,
   },
   selected: { backgroundColor: c.accentSoft, borderColor: c.accent },
-  option: { flex: 1, color: c.text, fontSize: 14, lineHeight: 20, fontWeight: "500" },
+  option: {
+    flex: 1,
+    color: c.text,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "500",
+  },
   input: {
     minHeight: 54,
     fontSize: 16,
@@ -422,6 +310,11 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
   },
   fine: { fontSize: 12, lineHeight: 18 },
-  footnote: { fontSize: 11, color: c.muted, textAlign: "center", paddingTop: 3 },
+  footnote: {
+    fontSize: 11,
+    color: c.muted,
+    textAlign: "center",
+    paddingTop: 3,
+  },
   error: { color: c.danger, fontSize: 13, lineHeight: 18 },
 });

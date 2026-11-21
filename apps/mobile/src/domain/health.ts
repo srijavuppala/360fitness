@@ -3,6 +3,8 @@
  * out of `ProfileAnswers`: profile answers are validated, required and backed up
  * to the cloud as a unit, whereas health information is optional, consented
  * separately and stays on this device unless the user opts in to a backup.
+ *
+ * Only data that a defined rule uses is collected (data minimisation).
  */
 export const conditionOptions = [
   "Kidney-related condition",
@@ -21,9 +23,24 @@ export const answerOptions = [
   "Not sure",
   "Prefer not to disclose",
 ] as const;
+/** Pregnancy and breastfeeding need life-stage equations this app does not have. */
+export const lifeStageOptions = [
+  "Neither",
+  "Pregnant",
+  "Breastfeeding",
+  "Prefer not to disclose",
+] as const;
+export const dialysisOptions = [
+  "Not on dialysis",
+  "On dialysis",
+  "Kidney transplant",
+  "Not sure",
+] as const;
 
 export type Condition = (typeof conditionOptions)[number];
 export type HealthAnswer = (typeof answerOptions)[number];
+export type LifeStage = (typeof lifeStageOptions)[number];
+export type DialysisStatus = (typeof dialysisOptions)[number];
 
 export const KIDNEY: Condition = "Kidney-related condition";
 export const OTHER_CONDITION: Condition = "Other health condition";
@@ -36,6 +53,7 @@ export const exclusiveConditions: readonly Condition[] = [
 export const HEALTH_VERSION = 1;
 export const NOTE_MAX_LENGTH = 200;
 export const OTHER_MAX_LENGTH = 100;
+export const SOURCE_MAX_LENGTH = 100;
 /**
  * Data-entry sanity bounds for a clinician-provided protein target in grams a
  * day. These only reject typos; they are not clinical limits and the app does
@@ -44,10 +62,18 @@ export const OTHER_MAX_LENGTH = 100;
 export const CLINICIAN_PROTEIN_MIN_G = 1;
 export const CLINICIAN_PROTEIN_MAX_G = 500;
 
+/**
+ * A target entered from the user's care team. Kept with its provenance
+ * (nutrient and unit are implied: protein, grams a day). It is never
+ * validated or endorsed by the app and is ignored once `reviewBy` passes.
+ */
 export type ClinicianProtein = {
-  /** Grams per day, exactly as entered by the user from their care team. */
   grams: number;
   enteredAt: string;
+  /** Who gave it, for example "Dr A, City Hospital" or "my dietitian". */
+  source?: string;
+  /** Date (YYYY-MM-DD) the target should be reviewed or expires. */
+  reviewBy?: string;
 };
 export type HealthProfile = {
   version: 1;
@@ -55,6 +81,9 @@ export type HealthProfile = {
   consentGivenAt: string;
   conditions?: Condition[];
   conditionOther?: string;
+  /** Only asked when a kidney-related condition is selected. */
+  kidneyDialysis?: DialysisStatus;
+  lifeStage?: LifeStage;
   dietaryRestrictions?: HealthAnswer;
   dietaryRestrictionsNote?: string;
   professionalGuidance?: HealthAnswer;
@@ -76,6 +105,10 @@ const isoDate = (value: unknown): value is string =>
   typeof value === "string" &&
   value.length <= 40 &&
   Number.isFinite(Date.parse(value));
+const calendarDate = (value: unknown): value is string =>
+  typeof value === "string" &&
+  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  Number.isFinite(Date.parse(`${value}T12:00:00Z`));
 
 /**
  * Throws a generic message on any problem. It never echoes the offending
@@ -94,6 +127,8 @@ export function validateHealthProfile(
     "consentGivenAt",
     "conditions",
     "conditionOther",
+    "kidneyDialysis",
+    "lifeStage",
     "dietaryRestrictions",
     "dietaryRestrictionsNote",
     "professionalGuidance",
@@ -125,6 +160,17 @@ export function validateHealthProfile(
   text("conditionOther", OTHER_MAX_LENGTH);
   if (h.conditionOther !== undefined && !conditions.includes(OTHER_CONDITION))
     fail();
+  if (
+    h.kidneyDialysis !== undefined &&
+    (!dialysisOptions.includes(h.kidneyDialysis as never) ||
+      !conditions.includes(KIDNEY))
+  )
+    fail();
+  if (
+    h.lifeStage !== undefined &&
+    !lifeStageOptions.includes(h.lifeStage as never)
+  )
+    fail();
   for (const [field, note] of [
     ["dietaryRestrictions", "dietaryRestrictionsNote"],
     ["professionalGuidance", "professionalGuidanceNote"],
@@ -139,12 +185,19 @@ export function validateHealthProfile(
     if (
       !p ||
       typeof p !== "object" ||
-      Object.keys(p).some((k) => k !== "grams" && k !== "enteredAt") ||
+      Object.keys(p).some(
+        (k) => !["grams", "enteredAt", "source", "reviewBy"].includes(k),
+      ) ||
       typeof p.grams !== "number" ||
       !Number.isInteger(p.grams) ||
       p.grams < CLINICIAN_PROTEIN_MIN_G ||
       p.grams > CLINICIAN_PROTEIN_MAX_G ||
-      !isoDate(p.enteredAt)
+      !isoDate(p.enteredAt) ||
+      (p.source !== undefined &&
+        (typeof p.source !== "string" ||
+          !p.source.trim() ||
+          p.source.length > SOURCE_MAX_LENGTH)) ||
+      (p.reviewBy !== undefined && !calendarDate(p.reviewBy))
     )
       fail();
   }
@@ -160,20 +213,29 @@ export function parseClinicianProtein(input: string): number | null {
     : null;
 }
 
+/** A correctable form mistake whose message is safe to show (it echoes no answers). */
+export class HealthInputError extends Error {}
+
 export type HealthDraft = {
   conditions: Condition[];
   conditionOther: string;
+  kidneyDialysis?: DialysisStatus;
+  lifeStage?: LifeStage;
   dietaryRestrictions?: HealthAnswer;
   dietaryRestrictionsNote: string;
   professionalGuidance?: HealthAnswer;
   professionalGuidanceNote: string;
   clinicianProtein: string;
+  clinicianSource: string;
+  clinicianReviewBy: string;
 };
 
 export function draftFromHealth(health?: HealthProfile): HealthDraft {
   return {
     conditions: [...(health?.conditions ?? [])],
     conditionOther: health?.conditionOther ?? "",
+    kidneyDialysis: health?.kidneyDialysis,
+    lifeStage: health?.lifeStage,
     dietaryRestrictions: health?.dietaryRestrictions,
     dietaryRestrictionsNote: health?.dietaryRestrictionsNote ?? "",
     professionalGuidance: health?.professionalGuidance,
@@ -181,6 +243,8 @@ export function draftFromHealth(health?: HealthProfile): HealthDraft {
     clinicianProtein: health?.clinicianProtein
       ? String(health.clinicianProtein.grams)
       : "",
+    clinicianSource: health?.clinicianProtein?.source ?? "",
+    clinicianReviewBy: health?.clinicianProtein?.reviewBy ?? "",
   };
 }
 
@@ -204,6 +268,9 @@ export function healthFromDraft(
   if (draft.conditions.length) health.conditions = [...draft.conditions];
   if (draft.conditions.includes(OTHER_CONDITION) && trim(draft.conditionOther))
     health.conditionOther = trim(draft.conditionOther);
+  if (draft.conditions.includes(KIDNEY) && draft.kidneyDialysis)
+    health.kidneyDialysis = draft.kidneyDialysis;
+  if (draft.lifeStage) health.lifeStage = draft.lifeStage;
   for (const [field, note] of [
     ["dietaryRestrictions", "dietaryRestrictionsNote"],
     ["professionalGuidance", "professionalGuidanceNote"],
@@ -215,13 +282,30 @@ export function healthFromDraft(
   if (draft.conditions.includes(KIDNEY) && trim(draft.clinicianProtein)) {
     const grams = parseClinicianProtein(draft.clinicianProtein);
     if (grams === null)
-      throw new Error(
+      throw new HealthInputError(
         `Enter a whole number of grams from ${CLINICIAN_PROTEIN_MIN_G} to ${CLINICIAN_PROTEIN_MAX_G}.`,
       );
-    health.clinicianProtein =
-      previous?.clinicianProtein?.grams === grams
-        ? previous.clinicianProtein
-        : { grams, enteredAt: stamp };
+    if (!trim(draft.clinicianSource))
+      throw new HealthInputError(
+        "Tell us who gave you this protein target so it can be shown as theirs.",
+      );
+    const review = trim(draft.clinicianReviewBy);
+    if (review && !calendarDate(review))
+      throw new HealthInputError(
+        "Enter the review date as YYYY-MM-DD, or leave it blank.",
+      );
+    const unchanged =
+      previous?.clinicianProtein?.grams === grams &&
+      previous.clinicianProtein.source === trim(draft.clinicianSource) &&
+      previous.clinicianProtein.reviewBy === (review || undefined);
+    health.clinicianProtein = unchanged
+      ? previous.clinicianProtein
+      : {
+          grams,
+          enteredAt: stamp,
+          source: trim(draft.clinicianSource),
+          ...(review ? { reviewBy: review } : {}),
+        };
   }
   validateHealthProfile(health);
   return health;

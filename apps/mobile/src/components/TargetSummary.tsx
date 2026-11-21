@@ -1,12 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
+import { DASHBOARD_HEALTH_NOTICE } from "../domain/health-copy";
 import { NutritionGoalResult, shownValue } from "../domain/nutrition-goal";
 import { directionLabel, Targets } from "../domain/targets";
 import { colors as c } from "../theme";
 import { Copy } from "./ui";
 
 /**
- * `goal` is optional so existing callers keep working. When given, targets the
- * health-aware layer withholds are shown as "Needs review" instead of a number.
+ * Always shows a calorie and four nutrient numbers. Health conditions may
+ * change those numbers. They are never replaced with a range or “needs review”.
  */
 export function TargetSummary({
   targets,
@@ -15,6 +16,8 @@ export function TargetSummary({
   targets: Targets;
   goal?: NutritionGoalResult | null;
 }) {
+  const healthInvolved = !!goal && goal.selectedConditions.length > 0;
+  const kcal = goal ? (shownValue(goal, "kcal") ?? targets.kcal) : targets.kcal;
   const macros = (
     [
       ["Protein", "protein", targets.protein, c.green],
@@ -25,16 +28,16 @@ export function TargetSummary({
   ).map(([label, key, general, color]) => ({
     label,
     color,
-    value: goal ? shownValue(goal, key) : general,
+    value: goal ? (shownValue(goal, key) ?? general) : general,
   }));
   return (
     <View
-      accessibilityLabel={`Daily target ${targets.kcal} kilocalories. ${directionLabel(targets)}. Estimate, not medical advice.`}
+      accessibilityLabel={`Daily target ${kcal} kilocalories. ${directionLabel(targets)}. Estimate, not medical advice.`}
       style={s.card}
     >
       <Text style={s.kicker}>YOUR DAILY TARGET</Text>
       <Text style={s.kcal}>
-        {targets.kcal.toLocaleString("en-US")}
+        {kcal.toLocaleString("en-US")}
         <Text style={s.unit}> kcal</Text>
       </Text>
       <Copy muted style={s.direction}>
@@ -48,23 +51,19 @@ export function TargetSummary({
           <View key={label} style={s.macro}>
             <View style={[s.dot, { backgroundColor: color }]} />
             <Text style={s.macroValue}>
-              {value === null ? "—" : value}
-              {value === null ? null : <Text style={s.macroUnit}> g</Text>}
+              {value}
+              <Text style={s.macroUnit}> g</Text>
             </Text>
             <Copy muted style={s.macroLabel}>
-              {value === null ? `${label} · needs review` : label}
+              {label}
             </Copy>
           </View>
         ))}
       </View>
-      {targets.notes.map((note) => (
-        <Copy key={note} muted style={s.note}>
-          {note}
-        </Copy>
-      ))}
       <Copy muted style={s.disclaimer}>
-        Estimate from a standard formula, not medical advice. A doctor or
-        trainer can adjust this later.
+        {healthInvolved
+          ? DASHBOARD_HEALTH_NOTICE
+          : "Estimate from a standard formula, not medical advice. A doctor or trainer can adjust this later."}
       </Copy>
     </View>
   );
@@ -91,12 +90,16 @@ const s = StyleSheet.create({
   },
   unit: { fontSize: 14, color: c.muted, letterSpacing: 0, fontWeight: "500" },
   direction: { fontSize: 13 },
-  macros: { flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 6 },
+  macros: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
+    marginTop: 6,
+  },
   macro: { flex: 1, gap: 2 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   macroValue: { color: c.text, fontSize: 16, fontWeight: "600" },
   macroUnit: { fontSize: 11, color: c.muted, fontWeight: "500" },
   macroLabel: { fontSize: 11 },
-  note: { fontSize: 12, marginTop: 4 },
   disclaimer: { fontSize: 11, marginTop: 4 },
 });

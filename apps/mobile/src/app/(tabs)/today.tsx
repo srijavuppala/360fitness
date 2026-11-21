@@ -21,7 +21,12 @@ import {
 } from "../../components/MobileFrame";
 import { useApp } from "../../data/store";
 import { dailyNutrition, formatValue, localDate } from "../../domain/meals";
-import { buildNutritionGoal, shownValue } from "../../domain/nutrition-goal";
+import { DASHBOARD_HEALTH_NOTICE } from "../../domain/health-copy";
+import {
+  buildNutritionGoal,
+  calorieRing,
+  shownValue,
+} from "../../domain/nutrition-goal";
 import { colors as c } from "../../theme";
 
 export default function Today() {
@@ -42,8 +47,9 @@ export default function Today() {
   const goal = state.profile
     ? buildNutritionGoal(state.profile.answers, state.health)
     : null;
-  // Calories are never withheld by the health-aware layer; macros come from `goal`.
-  const targets = goal?.generalTarget ?? null;
+  // The ring and the calorie line share the evaluated target, not a cached copy.
+  const targetKcal = goal ? shownValue(goal, "kcal") : null;
+  const ring = calorieRing(total.kcal, targetKcal);
   const count = state.templates.filter((meal) =>
     entries.some((entry) => entry.id === meal.id),
   ).length;
@@ -51,8 +57,7 @@ export default function Today() {
     (entry) => !state.templates.some((meal) => meal.id === entry.id),
   );
   const eaten = total.kcal;
-  const remaining =
-    targets && eaten !== null ? targets.kcal - eaten : null;
+  const remaining = ring?.remaining ?? null;
   const nextMeal = state.templates.find(
     (meal) => !entries.some((entry) => entry.id === meal.id),
   );
@@ -96,37 +101,37 @@ export default function Today() {
         <View style={s.row}>
           <View style={{ flex: 1, gap: 5 }}>
             <Text style={s.label}>
-              {targets ? "EATEN TODAY" : "LOGGED SO FAR"}
+              {ring ? "EATEN TODAY" : "LOGGED SO FAR"}
             </Text>
             <Text style={s.energy}>
               {formatValue(total.kcal)}
               <Text style={s.unit}>
-                {targets ? ` / ${targets.kcal} kcal` : " kcal"}
+                {ring ? ` / ${ring.target} kcal` : " kcal"}
               </Text>
             </Text>
             <Text style={s.date}>
-              {targets && remaining !== null
+              {ring && remaining !== null
                 ? remaining >= 0
                   ? `${formatValue(remaining)} kcal remaining`
                   : `${formatValue(Math.abs(remaining))} kcal over target`
                 : `${confirmedCount} meals confirmed · estimates`}
             </Text>
           </View>
-          {targets ? (
+          {ring ? (
             <RoutineRing
-              count={eaten ?? 0}
-              total={targets.kcal}
+              count={ring.eaten}
+              total={ring.target}
               size={82}
               caption="OF TARGET"
-              center={
-                eaten === null
-                  ? "—"
-                  : `${Math.round((eaten / Math.max(targets.kcal, 1)) * 100)}%`
-              }
-              accessibilityLabel={`${formatValue(eaten)} of ${targets.kcal} kilocalories eaten`}
+              center={ring.percent === null ? "—" : `${ring.percent}%`}
+              accessibilityLabel={`${formatValue(eaten)} of ${ring.target} kilocalories eaten`}
             />
           ) : (
-            <RoutineRing count={count} total={state.templates.length} size={82} />
+            <RoutineRing
+              count={count}
+              total={state.templates.length}
+              size={82}
+            />
           )}
         </View>
         <View
@@ -144,26 +149,6 @@ export default function Today() {
           <Icon name="chevron-forward" color={c.accent} size={16} />
         </View>
       </Pressable>
-      <View style={s.actions}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Scan food"
-          onPress={() => router.push("/scan")}
-          style={s.action}
-        >
-          <Icon name="scan-outline" color={c.accent} />
-          <Text style={s.actionText}>Scan food</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Log a meal"
-          onPress={() => router.push("/add")}
-          style={s.action}
-        >
-          <Icon name="add-circle-outline" color={c.accent} />
-          <Text style={s.actionText}>Log a meal</Text>
-        </Pressable>
-      </View>
       <View style={s.next}>
         <Text style={s.label}>
           {nextMeal
@@ -190,6 +175,32 @@ export default function Today() {
           </Copy>
         )}
       </View>
+      <View style={s.actions}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Scan food"
+          onPress={() => router.push("/scan")}
+          style={s.action}
+        >
+          <Icon name="scan-outline" color={c.accent} />
+          <Text style={s.actionText}>Scan food</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Log a meal"
+          onPress={() => router.push("/add")}
+          style={s.action}
+        >
+          <Icon name="add-circle-outline" color={c.accent} />
+          <Text style={s.actionText}>Log a meal</Text>
+        </Pressable>
+      </View>
+      <Button
+        icon="heart-outline"
+        onPress={() => router.push("/health")}
+      >
+        Health & medical information
+      </Button>
       <SettingsRow
         title="Today's meals"
         detail={`${entries.length} checked in · ${state.templates.length} usual meals`}
@@ -206,32 +217,31 @@ export default function Today() {
             <Text style={s.energy}>
               {formatValue(total.kcal)}
               <Text style={s.unit}>
-                {targets ? ` / ${targets.kcal} kcal` : " kcal logged"}
+                {ring ? ` / ${ring.target} kcal` : " kcal logged"}
               </Text>
             </Text>
             <Nutrition
               total={total}
               target={
-                goal
+                goal?.generalTarget
                   ? {
-                      protein: shownValue(goal, "protein"),
-                      carbs: shownValue(goal, "carbs"),
-                      fat: shownValue(goal, "fat"),
+                      protein:
+                        shownValue(goal, "protein") ??
+                        goal.generalTarget.protein,
+                      carbs:
+                        shownValue(goal, "carbs") ?? goal.generalTarget.carbs,
+                      fat: shownValue(goal, "fat") ?? goal.generalTarget.fat,
                     }
                   : undefined
               }
             />
             <Copy muted>
-              {targets
-                ? "Confirmed meals compared with your estimated daily target. This is not medical advice."
+              {ring
+                ? goal && goal.status !== "GENERAL_ESTIMATE"
+                  ? DASHBOARD_HEALTH_NOTICE
+                  : "Confirmed meals compared with your estimated daily target. This is not medical advice."
                 : "Only confirmed meals contribute to these estimates. Unlogged and skipped meals don’t count as eaten."}
             </Copy>
-            {goal?.requiresProfessionalReview ? (
-              <Copy muted>
-                Some targets are intentionally not shown because they may not
-                suit your health circumstances. See Profile for details.
-              </Copy>
-            ) : null}
           </>
         ) : (
           <>
